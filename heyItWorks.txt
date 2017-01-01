@@ -1,0 +1,2 @@
+2016-10-30 01:14:43,512 SECURE POST Data (passport.twitch.tv):
+scope=openid&client_id=36926892495301a63b2e9350a38d3d6dbf72ad81e571a3ebba4687250ec8f352c70b3e91229602f73e1335528f3caa00a5cf513f484d7003784e722f2ce7a216&redirect_uri=http%3A%2F%2Fwww.twitch.tv%2F&response_type=code&state=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyZWRpcmVjdF9wYXRoIjoiaHR0cHM6Ly93d3cudHdpdGNoLnR2LyJ9.LJqY_XciO98NqOlYWbBNUjrpI5jG3GKTJi7nifp7-wc&nonce=91fad06425239bd7a054137c17f287e07ffbfb2f&from_embed=false&time_to_submit=&username=Hannay11311%40live.com+&password=hahshshshah
