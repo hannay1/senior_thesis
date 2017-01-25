@@ -151,9 +151,11 @@ class MITM_Interface:
 class Get_Pwords:
 	'''
 		TO DO:
-			add more sites
+			*	add more sites
+			* 	implement abstract getter
 	'''
 
+	#getters
 	def __init__(self):
 		self.interface = MITM_Interface_Interface()
 
