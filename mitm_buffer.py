@@ -1,5 +1,6 @@
 import mitmproxy, sqlite3, os, base64, sys
-from get_pwords import Get_Pwords
+from get_pwords import *
+from pword_analysis import *
 
 class MITM_Interface:
 
@@ -7,8 +8,8 @@ class MITM_Interface:
 		self.dbName = "Loot.db"
 		self.connex = sqlite3.connect(self.dbName)
 		self.cur = self.connex.cursor()
-		self.cpu_factor = 0
 		self.new_user = True #replace this with more sophisticated check
+		self.analyzer = Pword_Analyzer()
 
 	#hashmaps for use when sending to debriefing page
 	def tableA_vals(self, user_id, pword_id, associated_account, password_length, strength):
@@ -24,17 +25,31 @@ class MITM_Interface:
 
 	def assign_strength(self, password):
 		'''assigns a password a "strength" value determined by: 
-		# of permutations of characters, 
+		# of types of characters (base score), 
 		password length, 
-		distribution of unique characters,
-		self.cpu_factor (approximate cpu clockspeed)
+		number of "transitions" between characters:
+		self.crunch_factor (approximate # of passwords tried per second)
+			example: Tr0ub4dor&3 --> 11 transitions
+					 Dingus8p9fd;lquaker --> 9 transitions
 
-		--> number of years to crack?
+					 transition: any one of:
+					 * if uppercase letter --> lowercase
+					 * if lowercase letter --> uppercase
+					 * if letter --> number
+					 * if number --> letter
+					 * if number --> punctuation
+					 * if punctuation --> letter
+					 * if punctuation --> number
+					 * if letter --> punctuation
+
+		--> score calculated via:
+			base score * (password_length / crunch_factor) * (# transitions)
+
 		'''
-		return -1
+		return self.analyzer.score_password(password)
 
 	def new_user_id(self):
-		return os.urandom(8) if self.new_user
+		return os.urandom(8) if self.new_user else None
 
 	def check_for_shared_passwords(self,):
 		'''checks traffic for shared passwords'''
@@ -45,12 +60,11 @@ class MITM_Interface:
 		'''makes decisions based on account names and passwords from mitmproxy : inserts into table(s), makes a new userID, etc'''
 		u_id = str(self.new_user_id())
 		p_id = str(os.urandom(10))
-		pword_length = str(password.length())
-		print("password: ", password)
-		print("length of password: ", pword_length)
+		pword_length = str(len(password))
+		print "length of password: ", pword_length
 		strength = self.assign_strength(password)
-		num_shared = self.check_for_shared_passwords()
-		self.insert_into_tables()
+		#num_shared = self.check_for_shared_passwords()
+		#self.insert_into_tables()
 		pass
 
 	def initTableA(self):
@@ -81,22 +95,22 @@ class MITM_Interface:
 			pass
 
 	def get_user_pword_table(self, u_id):
-        try:
-        	table_s = str(uid)
-            self.cur.execute("SELECT * FROM Table" + table_s + " WHERE username_hash = [?,?,?]", [username_hash, associated_account, password])
-            pw_db = self.cur.fetchone()
-            if not pw_db:
-                raise sqlite3.Error
-            print("got enc'd user db")
-            return pw_db
-        except sqlite3.Error as SQE:
-            print("error updating record:", SQE)
-            return None
+		try:
+			table_s = str(uid)
+			self.cur.execute("SELECT * FROM Table" + table_s + " WHERE username_hash = [?,?,?]", [username_hash, associated_account, password])
+			pw_db = self.cur.fetchone()
+			if not pw_db:
+				raise sqlite3.Error
+			print("got enc'd user db")
+			return pw_db
+		except sqlite3.Error as SQE:
+			print("error updating record:", SQE)
+			return None
 
 
 	def insert_into_tables(self, user_id, pword_id, associated_account, password_length, strength, number_shared_passwords, password):
 		password = base64.b64encode()
-        table_s = str(uid)
+		table_s = str(uid)
 		try:
 			print("adding to table a...")
 			self.cur.execute("INSERT OR IGNORE INTO TableA VALUES (?,?,?,?,?)", [user_id, pword_id, associated_account, password_length, strength])
@@ -113,15 +127,15 @@ class MITM_Interface:
 			pass
 
 	def initTableB(self):
-        try:
+		try:
 			query = 'CREATE TABLE IF NOT EXISTS TableB' \
 					'(user_id TEXT PRIMARY KEY NOT NULL,' \
 					'number_shared_passwords INTEGER NOT NULL)'
 			self.cur.execute(query)
 			self.connex.commit()
-        except sqlite3.Error as SQE:
-            print("error updating record:", SQE)
-            return None
+		except sqlite3.Error as SQE:
+			print("error updating record:", SQE)
+			return None
 
 
 	def view_db(self):
@@ -146,4 +160,5 @@ class MITM_Interface:
 		except sqlite3.OperationalError as SQE:
 			print("error selecting from a table: ", SQE)
 			pass
+
 
