@@ -8,15 +8,17 @@ class Pword_Analyzer:
 		self.punx_set = set(string.punctuation)
 		self.punx_set.update(' ')
 
-	def get_length(self, password):
-		return len(password)
-
 	def get_character_counts(self, password):
 		num_punx = [char in self.punx_set for char in password].count(True)
 		arabic_numerals = [char in set(string.digits) for char in password].count(True)
 		lowercase_letters = [char in set(string.ascii_lowercase) for char in password].count(True)
 		uppercase_letters = [char in set(string.ascii_uppercase) for char in password].count(True)
-		return (lowercase_letters, uppercase_letters, arabic_numerals, num_punx)
+		tup = (lowercase_letters, uppercase_letters, arabic_numerals, num_punx)
+		print "*** lowercase_letters: " + str(lowercase_letters)
+		print "*** uppercase_letters:" + str(uppercase_letters)
+		print "*** arabic_numerals:" + str(arabic_numerals)
+		print "*** punctuation:" + str(num_punx)
+		return tup
 
 	def get_base_score(self, password):
 		char_counts = self.get_character_counts(password)
@@ -56,7 +58,7 @@ class Pword_Analyzer:
 				t_score += 1
 			else:
 				continue
-		print "t_score for " + password + ": " + str(t_score)
+		print "t_score for " + password + ": " + str(t_score) + " transitions"
 		return t_score
 
 
@@ -64,12 +66,12 @@ class Pword_Analyzer:
 		potential_words = 0
 		with open(self.wordlist, "r") as wlf:
 			for pword in wlf:
-				if pword.rstrip("\r\n") in password:
-					print "password may contain phrase: " + pword.rstrip("\r\n")
+				if pword.rstrip("\r\n") in password.lower():
+					print "[ALMOST] password may contain phrase: " + pword.rstrip("\r\n")
 					potential_words += 1
 					if pword.rstrip("\r\n") == password:
 						potential_words = -1
-						print "password found in wordlist!!!"
+						print "[HIT!] password found in wordlist!!!"
 						break
 		wlf.close()
 		return potential_words
@@ -88,24 +90,41 @@ class Pword_Analyzer:
 		pass
 
 	def score_password(self, password):
-		length = self.get_length(password)
 		number_t = self.get_transitions(password)
 		base_score = self.get_base_score(password)
 		tot = base_score * number_t
 		word_count = self.possibly_word(password)
 		print "# of possible words: " + str(word_count)
-		if word_count <= -1:
-			tot = 0
+		edit_count = self.edit_distance(password)
+		tot = (base_score * number_t) * edit_count if edit_count is not 0 else 0
 		print "total password score: " +  str(tot)
 		print "////////////////////////////////////"
+
 		return tot
-		#factor in # of possible words and character counts
-		#to do: assign "bad", "good", "very good" ratings based on tot
 
 
-
-
-
-
-
-
+	def edit_distance(self,password1):
+		try:
+			with open(self.wordlist, "r") as wlf:
+				dists = {}
+				for pword in wlf:
+					password2 = pword.rstrip("\r\n")
+					str_len = len(password1) if len(password1) > len(password2) else len(password2)
+					tabe = [[0 for i in range(str_len +1)] for j in range(str_len +1)]
+					for x in range(0, len(tabe[0])):tabe[0][x] = x
+					for y in range(0, len(tabe[0])):tabe[y][0] = y
+					for a in range(1, len(password1) +1):
+						for b in range(1, len(password2) +1):
+							if password1[a-1] == password2[b-1]:
+								#same --> diagonal
+								tabe[a][b] = tabe[a-1][b-1]
+							else:
+								#different --> 1 + min of (a,b,c)
+								tabe[a][b] = 1 + min(tabe[a-1][b-1], tabe[a-1][b], tabe[a][b-1])
+					dists[password2] = (tabe[len(password1)][len(password2)])
+				min_dist = min(dists, key=dists.get)
+				print  "closest [password] : " +  str(min_dist) + " | edit distance: " + str(dists[min_dist])
+				return dists[min_dist]
+				#min(d.items(), key=lambda x: x[1])
+		except Error as fnfe:
+			print fnfe
