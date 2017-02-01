@@ -92,7 +92,6 @@ class Pword_Analyzer:
 	def score_password(self, password):
 		number_t = self.get_transitions(password)
 		base_score = self.get_base_score(password)
-		tot = base_score * number_t
 		word_count = self.possibly_word(password)
 		print "# of possible words: " + str(word_count)
 		edit_count = self.edit_distance(password)
@@ -120,11 +119,12 @@ class Pword_Analyzer:
 								tabe[a][b] = tabe[a-1][b-1]
 							else:
 								#different --> 1 + min of (a,b,c)
-								tabe[a][b] = 1 + min(tabe[a-1][b-1], tabe[a-1][b], tabe[a][b-1])
+								tabe[a][b] = min(tabe[a-1][b-1] + 1, tabe[a-1][b] +1, tabe[a][b-1] +1)
 					dists[password2] = (tabe[len(password1)][len(password2)])
+				#ratio = 1.0 - (float(tabe[len(string1)][len(string2)]) / float((max(len(string1), len(string2)))))
 				min_dist = min(dists, key=dists.get)
-				print  "closest [password] : " +  str(min_dist) + " | edit distance: " + str(dists[min_dist])
+				print"closest [password] : " +  str(min_dist) + " | edit distance: " + str(dists[min_dist])
+				#print"percent same as " + str(dists[min_dist]) +  " :" + str(ratio)
 				return dists[min_dist]
-				#min(d.items(), key=lambda x: x[1])
 		except Error as fnfe:
 			print fnfe
