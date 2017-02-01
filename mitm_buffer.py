@@ -11,7 +11,7 @@ class MITM_Interface:
 		self.connex = sqlite3.connect(self.dbName)
 		self.connex.text_factory = str
 		self.cur = self.connex.cursor()
-		self.current_user = str(uid)
+		self.current_user = uid
 		self.backend = default_backend()
 		self.analyzer = Pword_Analyzer()
 		self.initTableA()
@@ -33,9 +33,6 @@ class MITM_Interface:
 	def assign_strength(self, password):
 		return self.analyzer.score_password(password)
 
-	def new_user_id(self):
-		return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(8))
-
 	def check_for_shared_passwords(self, uid):
 		try:
 			query = 'CREATE TABLE IF NOT EXISTS TableA' \
@@ -50,6 +47,7 @@ class MITM_Interface:
 			pass
 
 	def read_traffic(self, account, password):
+		print "mitm_buffer.py uid: " + self.current_user
 		p_id = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(12))
 		strength = str(self.assign_strength(password))
 		length = str(len(password))

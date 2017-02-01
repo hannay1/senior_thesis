@@ -1,4 +1,4 @@
-import sys, os, subprocess, tempfile, datetime, time, signal, string
+import sys, os, subprocess, tempfile, datetime, time, signal, string, random
 
 class MITM_Main:
 
@@ -10,11 +10,12 @@ class MITM_Main:
 		self.welcome()
 
 	def new_user_id(self):
-		return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits + string.ascii_lowercase) for _ in range(8))
+		ide = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits + string.ascii_lowercase) for _ in range(8))
+		return ide
 
 	def switch_ap_on(self):
 		if not self.isUp:
-			idee = str(self.new_user_id)
+			idee = self.new_user_id()
 			print("switching on access point...")
 			pid = os.fork()
 			if pid > 0:
@@ -48,7 +49,6 @@ class MITM_Main:
 			pid = os.fork()
 			if pid > 0:
 				os.system("sudo xterm -e ./RAP.sh stop")
-				os.wait()
 				os.kill(pid, signal.SIGTERM)
 			self.isUp = False
 			print("access point switched off")
@@ -84,7 +84,7 @@ class MITM_Main:
 			print("no")
 			self.welcome()
 		elif resp == 5:
-			os.system("sudo pkill airodump-ng && sudo pkill python")  #this is stupid but it works
+			os.system("sudo pkill airodump-ng && sudo pkill python") 
 			sys.exit(0)
 
 

