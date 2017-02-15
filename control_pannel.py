@@ -4,9 +4,9 @@ class MITM_Main:
 
 	def __init__(self):
 		self.isUp = False
+		self.mon_mode = False
 		self.usb_int = "wlan0"
 		self.mon_int = "wlan0mon"
-		self.mon_mode = False
 		self.welcome()
 
 	def new_user_id(self):
@@ -25,6 +25,7 @@ class MITM_Main:
 			print("waiting for RAP.sh to finish...")
 			time.sleep(15)
 			self.isUp = True
+			self.mon_mode = True
 			pid2 = os.fork()
 			if pid2 > 0:
 				os.system("sudo xterm -e ./RAP2.sh")
@@ -39,6 +40,7 @@ class MITM_Main:
 				os.kill(pid3, signal.SIGTERM)
 			now = datetime.datetime.now()
 			print"access point started at " + str(now)
+			print "[*] USER ID: " + str(idee)
 		else:
 			print("access point is already up")
 
@@ -51,23 +53,22 @@ class MITM_Main:
 				os.system("sudo xterm -e ./RAP.sh stop")
 				os.kill(pid, signal.SIGTERM)
 			self.isUp = False
+			self.mon_mode = False
 			print("access point switched off")
 
 	def welcome(self):
-		print("*****HEY THERE*****")
+		print("*****CONTROL PANNEL*****")
 		picd = True
 		while picd:
 			resp = input("please select an option number:\n" \
 							"1.Switch Access Point On\n" \
 							"2.Switch Access Point Off\n" \
-							"3.See AP Details\n"\
-							"4.See passwords so far\n"\
-							"5.exit\n")
+							"3.Exit\n")
 			try:
 				resp = int(resp)
 			except ValueError:
 				pass
-			if resp not in range(1,6):
+			if resp not in range(1,4):
 				pass
 			else:
 				picd = False
@@ -78,15 +79,8 @@ class MITM_Main:
 			self.switch_ap_off()
 			self.welcome()
 		elif resp == 3:
-			print("no")
-			self.welcome()
-		elif resp == 4:
-			print("no")
-			self.welcome()
-		elif resp == 5:
 			os.system("sudo pkill airodump-ng && sudo pkill python") 
 			sys.exit(0)
-
 
 if __name__ == "__main__":
 	mal = MITM_Main()

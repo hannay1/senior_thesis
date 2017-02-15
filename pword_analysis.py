@@ -21,6 +21,7 @@ class Pword_Analyzer:
 		return tup
 
 	def get_base_score(self, password):
+		print "**** GENERAL INFO *****"
 		char_counts = self.get_character_counts(password)
 		b_s = 1
 		arabic_numerals = len(set(string.digits).intersection(password)) > 0
@@ -40,6 +41,7 @@ class Pword_Analyzer:
 
 
 	def get_transitions(self, password):
+		print "***** TRANSITIONS ****"
 		char_flag = []
 		t_score = 1 #for scoring purposes, 0 transitions --> t_score of 1
 		#char_flag index --> password char index
@@ -63,11 +65,12 @@ class Pword_Analyzer:
 
 
 	def possibly_word(self, password):
+		print "***** BRUTE FORCING *****"
 		potential_words = 0
 		with open(self.wordlist, "r") as wlf:
 			for pword in wlf:
 				if pword.rstrip("\r\n") in password.lower():
-					print "[ALMOST] password may contain phrase: " + pword.rstrip("\r\n")
+					print "[ALMOST] password contains string: " + pword.rstrip("\r\n")
 					potential_words += 1
 					if pword.rstrip("\r\n") == password:
 						potential_words = -1
@@ -76,33 +79,21 @@ class Pword_Analyzer:
 		wlf.close()
 		return potential_words
 
-	def check_for_common_addons(self, password):
-		'''
-			checks to see if adding strings like:
-				* 123
-				* 1234
-				* 1
-				* !
-				etc
-			result in the password being in the wordlist
-			if so, score is reduced by 1/4
-		'''
-		pass
-
 	def score_password(self, password):
 		number_t = self.get_transitions(password)
 		base_score = self.get_base_score(password)
 		word_count = self.possibly_word(password)
 		print "# of possible words: " + str(word_count)
-		edit_count = self.edit_distance(password)
+		edit_count, closest_password = self.edit_distance(password)
 		tot = (base_score * number_t) * edit_count if edit_count is not 0 else 0
+		print ("****** FINAL SCORE ******")
 		print "total password score: " +  str(tot)
 		print "////////////////////////////////////"
-
-		return tot
+		return (tot, edit_count, number_t)
 
 
 	def edit_distance(self,password1):
+		print "****** EDIT DISTANCE *******"
 		try:
 			with open(self.wordlist, "r") as wlf:
 				dists = {}
@@ -125,6 +116,9 @@ class Pword_Analyzer:
 				min_dist = min(dists, key=dists.get)
 				print"closest [password] : " +  str(min_dist) + " | edit distance: " + str(dists[min_dist])
 				#print"percent same as " + str(dists[min_dist]) +  " :" + str(ratio)
-				return dists[min_dist]
+				return dists[min_dist], str(min_dist)
 		except Error as fnfe:
 			print fnfe
+
+
+#sign beef with mitm private key 
