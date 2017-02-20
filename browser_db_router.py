@@ -8,7 +8,6 @@ class Browser_DB_Router:
 		self.connex.text_factory = str
 		self.cur = self.connex.cursor()
 		self.current_user = uid
-		self.backend = default_backend()
 		self.initTable()
 
 	def initTable(self):
@@ -81,7 +80,7 @@ class Browser_DB_Router:
 			print("error inserting record:", SQE)
 			pass
 
-	def update_BrowserTable_Session_id(self, user_id, toolbar_cmd):
+	def update_BrowserTable_Toolbar_Cmd(self, user_id, toolbar_cmd):
 		try:
 			print("adding to browser table...")
 			self.cur.execute("UPDATE BrowserTable SET recent_toolbar_cmd = ? WHERE user_id = ?", [toolbar_cmd, user_id])
@@ -96,9 +95,28 @@ class Browser_DB_Router:
 			print("retrieving from table...")
 			sesh_id = self.cur.execute("SELECT session_id FROM BrowserTable WHERE user_id = ?", [user_id])
 			self.connex.commit()
-			return str(sesh_id)
+			return str(self.cur.fetchone()[0])
 		except sqlite3.Error as SQE:
 			print("error finding record:", SQE)
 			pass
 
 
+	def get_browser_toolbar_cmd(self, user_id):
+		try:
+			print("retrieving from table...")
+			toolbar_id = self.cur.execute("SELECT recent_toolbar_cmd FROM BrowserTable WHERE user_id = ?", [user_id])
+			self.connex.commit()
+			return str(self.cur.fetchone()[0])
+		except sqlite3.Error as SQE:
+			print("error finding record:", SQE)
+			pass
+
+	def get_browser_login_cmd(self, user_id):
+		try:
+			print("retrieving from table...")
+			login_id = self.cur.execute("SELECT recent_login_cmd FROM BrowserTable WHERE user_id = ?", [user_id])
+			self.connex.commit()
+			return str(self.cur.fetchone()[0])
+		except sqlite3.Error as SQE:
+			print("error finding record:", SQE)
+			pass
