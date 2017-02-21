@@ -9,8 +9,7 @@ class Browser_Parser:
 
 
 	def __init__(self):
-		self.user_id =  sys.argv[1:]
-		self.user_id = self.user_id[0]
+		self.user_id =  sys.argv[1:][0]
 		print str(self.user_id)
 		self.browser_db_router= Browser_DB_Router(self.user_id)
 		self.uname = "beef"
@@ -218,7 +217,7 @@ class Browser_Parser:
 			else:
 				picd = False
 		if resp == 0:
-			self.show_browser_db()
+			self.browser_db_router.show_browser_db(self.user_id)
 			self.menu()
 		elif resp == 1:
 			self.save_hooked_browser_details()
