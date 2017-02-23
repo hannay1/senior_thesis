@@ -49,11 +49,22 @@ class Password_DB_Router:
 			print("error initting table:", SQE)
 			pass
 
-	def insert_into_table_A(self, user_id, pword_id, associated_account, password_length, strength, edit_distance, transitions):
+	def insert_into_table_A(self, user_id, pword_id, associated_account, password_length, strength, edit_distance, transitions, password):
 		try:
 			print("adding to table a...")
-			self.cur.execute("INSERT INTO TableA VALUES (?,?,?,?,?,?,?)", [user_id, pword_id, associated_account, password_length, strength, edit_distance, transitions])
-			self.connex.commit()
+			self.cur.execute("SELECT COUNT(associated_account) FROM TableA WHERE user_id = (?) and associated_account=(?)", [user_id, associated_account] )
+			counts = self.cur.fetchall()
+			count = counts[0][0]
+			print(str(count))
+			if count != 0:
+				self.cur.execute("UPDATE TableA SET pword_id = (?), password_length = (?), strength =  (?) , edit_distance = (?), transitions = (?) WHERE user_id = (?) and associated_account = (?)", [pword_id, password_length, strength, edit_distance, transitions, user_id, associated_account])
+				self.connex.commit()
+				self.cur.execute("UPDATE TableS SET password = (?) WHERE user_id = (?) and associated_account = (?)", [password, user_id, associated_account])
+				self.connex.commit()
+			else: 
+				self.cur.execute("INSERT or REPLACE INTO TableA VALUES (?,?,?,?,?,?,?)", [user_id, pword_id, associated_account, password_length, strength, edit_distance, transitions])
+				self.connex.commit()
+				self.insert_into_table_S(user_id, associated_account, password)
 		except sqlite3.Error as SQE:
 			print("error inserting record:", SQE)
 			pass
@@ -61,8 +72,17 @@ class Password_DB_Router:
 	def insert_into_table_B(self, user_id, password_id, number_shared_passwords, shared_accounts):
 		try:
 			print("adding to table b...")
-			self.cur.execute("INSERT or REPLACE INTO TableB VALUES (?,?,?,?)", [user_id, password_id, number_shared_passwords, shared_accounts])
+			self.cur.execute("SELECT COUNT(*) FROM TableB WHERE user_id=(?)", [user_id])
 			self.connex.commit()
+			counts = self.cur.fetchall()
+			count = counts[0][0]
+			print "tableB entry per id: " + str(count)
+			if count >1:
+				self.cur.execute("UPDATE TableB SET number_shared_passwords=(?), shared_accounts=(?) WHERE user_id=(?)",[number_shared_passwords, shared_accounts, user_id])
+				self.connex.commit()
+			else:
+				self.cur.execute("INSERT or REPLACE INTO TableB VALUES (?,?,?,?)", [user_id, password_id, number_shared_passwords, shared_accounts])
+				self.connex.commit()
 			print("successfully inserted records into tables...")
 		except sqlite3.Error as SQE:
 			print("error inserting record:", SQE)
@@ -105,7 +125,7 @@ class Password_DB_Router:
 			pass
 
 
-	def get_user_pwords_accounts(self, u_id):
+	def get_user_pwords_accounts(self, u_id, p_id):
 		paswds = []
 		try:
 			self.cur.execute("SELECT DISTINCT password from TableS WHERE user_id = (?)", [u_id])
@@ -119,7 +139,7 @@ class Password_DB_Router:
 				self.cur.execute("SELECT associated_account FROM TableS WHERE password = (?) and user_id = (?)", [row[0], u_id] )
 				accounts = self.cur.fetchall()
 				print "password #" + str(i) + " : " + str(count) + " accounts:" + str(accounts)
-				paswds.append(("Password # " + str(i), count, str(accounts)))
+				paswds.append((str(p_id), count, str(accounts)))
 			vals = self.tableB_vals(self.current_user, paswds[0][0], paswds[0][1], paswds[0][2])
 			return vals
 		except sqlite3.Error as SQE:
