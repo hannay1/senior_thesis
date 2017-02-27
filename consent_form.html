@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+<title>Consent page</title>
+<link href="static_bootstrap.min.css" rel="stylesheet">
+<link href="mitmproxy.css" rel="stylesheet">
+<link href="font-awesome.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="navbar navbar-default" role="navigation">
+<div class="container">
+<div class="navbar-header">
+<a class="navbar-brand" href="#" align='center'>Hello (ID number)</a>
+</div>
+</div>
+</div>
+<div class="container">
+
+<div class="row">
+<div class="span12">
+
+<center>
+<h2> Investigations in network & application security </h2>
+<h3> Consent page </h3>
+<hr/>
+<div class="text-left">
+<p>
+ <ul>
+  <li>Below is the flow of events for this experiment & what is expected from you:</li>
+  <ul>
+  	<li>If you are currently logged into any website (Facebook, Twitter, CC’s email, etc), clear your browser cache OR sign out of said accounts before you continue.</li>
+  	<li>Agree to the consent form presented in your browser after clicking “next”. Answer all questions truthfully and read all prompts.</li>
+  	<li>Select your operating system, and install the corresponding certificate file with my help. This will allow you to browse the Internet using the access point you are currently connected to in a secure manner.</li>
+  	<li>Browse the internet as you normally would via this access point. Feel free to log back into any sites. After about 20-25 minutes, I will let you know that it is time to conclude this trial.</li>
+  	<ul>
+  		<li>Please rest assured that your Internet traffic will NOT be recorded in any fashion that may be linked back to you (you are currently connected to this access point anonymously, and your ID is <ID number>).</li>
+  	</ul>
+  	<li>At which point, I will ask you if you want to see the debreifing page, which may contain some interesting things</li>
+  </ul>
+  <li>If you change your mind and would prefer not to have your data be included in this experiment, please let me know and I will delete all traces of it. </li>
+  <li>Get paid $5 for your time</li>
+</ul> 
+</p>
+</div>
+<hr/>
+<div class="text-center text-warning">
+<p>
+By clicking on the "Next" button below, you confirm that you understand the instructions above, and are willing to download & install the certificate file.
+</p>
+<form action="http://192.168.3.1/install_page.html">
+    <input type="submit" value="Next" />
+</form>
+</body>
+</html>

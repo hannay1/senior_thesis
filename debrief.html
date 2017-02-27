@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+<title>Install page</title>
+<link href="static_bootstrap.min.css" rel="stylesheet">
+<link href="mitmproxy.css" rel="stylesheet">
+<link href="font-awesome.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="navbar navbar-default" role="navigation">
+<div class="container">
+<div class="navbar-header">
+<a class="navbar-brand" href="#" align='center'>Hello (ID number)</a>
+</div>
+</div>
+</div>
+<div class="container">
+
+<div class="row">
+<div class="span12">
+
+<center>
+<h2>Investigations in network & application security</h2>
+<h3>Thank you for participating in this experiment!</h3>
+<h4>Debriefing:</h4>
+<hr/>
+<div class="text-left">
+<p>There was some information withheld from you that you may find interesting regarding the true intentions of this project.</p>
+<p>What you just took part in is what is commonly referred to as a “man in the middle” attack. This is where an attacker sets up a connection between end users and the intended website, and performs various shenanigans on the end users, like this:</p>
+<center><img src="MITM-attack-diagram-2.jpg"style="width:610px;height:332px;"></center>
+<hr/>
+<p>The actual goals of the project are three fold:</p>
+<ul>
+    <li>To assess whether a rogue access point was capable of being run on the CC network. Looks like that isn’t a problem so far.</li>
+    <li>To assess the security of the passwords used by people in their various on line accounts. This was done automatically via a computer program that decrypted all the secure traffic sent from your machine to the rest of the network, using the certificate file you installed earlier, reading (but not recording) the decrypted passwords, and doing some analysis on them (before throwing the passwords themselves away).</li>
+    <ul>
+        <li><strong>DO NOT WORRY: YOUR PASSWORDS ARE STILL SAFE. NO ONE HAS RECORDED THEM</strong>, nor do I know your actual login credentials due to the anonymous ID being used & the fact that no usernames/emails were recorded. However, the following details have been recorded anonymously using the ID given to you at the start of this experiment:</li>
+        <ul>
+            <li>The “strength” of your passwords:</li>
+            <ul>
+            <li>Through various calculations, an indication as to how difficult it would be to attempt to brute force (relentlessly guess) your passwords was found. Longer passwords with more random characters are obviously a lot more difficult to guess via brute force.</li>
+            </ul>
+            <li>The number of shared passwords used in your various accounts. People sometimes tend to use one password for multiple accounts. <strong>This is obviously a bad idea.</strong></li>
+        </ul>
+    </ul>
+    <li>To assess the level of security offered by the browser you used to browse the Internet while connected to this access point.</li>
+        <ul>
+            <li>While you were connected to the network, a piece of code was injected into every page you visited. This code is used by a program that records some meta-data on your browser.</li>
+            <li><strong>NO PERSONAL DATA WAS TAKEN BY THIS PROGRAM, AND NOTHING HARMFUL WAS CARRIED OUT ON YOUR BROWSER</strong></li>
+            <li>The data collected by this program included things like the version number of your browser, your operating system, and other boring stuff.</li>
+            <li>It was also capable of launching fake login and toolbar pop-ups. I was testing how you interacted with them.</li>
+            <li>These pop-ups you may or may not have seen did not collect any personal data from you, nor did they alter you system/browser in any way.</li>
+        </ul>
+</ul>
+<p>As I said before, <strong>that certificate file is useless for any purposes other than this specific access point.</strong> Even if some hacker used the same tools used in this experiment against you as part of a similar scheme in the future, the fact that you have the certificate installed is useless. It will expire in a year anyway, at which point it won’t work even if you re-connect to this access point again (which will be long gone by Block 7).<strong> Let me know if you want to uninstall it anyway and I can do that now.</strong></p>
+<hr/>
+<p>Furthermore, your browser is unaffected once you disconnect from this access point.<strong> Anything done through this access point stays on this access point</strong>, so feel free to use the Internet without fear that anyone has the potential to snoop in on your data or affect your browser from now on.</p>
+<p>As stated before, all this data is in no way traceable back to you. All raw data will be destroyed during Block 7. You do not need to change your passwords now that all this has happened, as they are still safe & unknown to me. But it couldn’t hurt to do so anyway for your peace of mind (especially if you use the same password for multiple accounts!!)</p>
+<p>I hope this has been informative and insightful. In the future, please exercise caution when connecting to any random access points or downloading random files. If you have any further questions, please ask me now or via email at some point.</p>
+<p><strong>Once again, thank you very much for your time and inclusion in this project.</strong></p>
+<div class='text-center text-info'>
+<h3>Have a nice day!</h3>
+</div>
+<hr/>
+<div class="text-center text-info">
+<p><strong>If you are now uncomfortable with any of the things I just told you, please let me know so I can delete ALL data gathered via your participation before you leave this room or via email at Hannay.AlMohanna@ColoradoCollege.edu.</strong></p>
+  </div>
+</body>
+</html>
+
+<!-- V09XIFVSIFNPIFNNQVJUIEtFRVAgRElHR0lORw==  -->
+
