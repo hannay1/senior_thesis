@@ -5,8 +5,6 @@ class MITM_Main:
 	def __init__(self):
 		self.isUp = False
 		self.mon_mode = False
-		self.usb_int = "wlan0"
-		self.mon_int = "wlan0mon"
 		self.welcome()
 
 	def new_user_id(self):

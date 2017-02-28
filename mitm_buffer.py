@@ -34,6 +34,7 @@ class MITM_Interface:
 		self.pw_db_router.insert_into_table_B(self.current_user, p_id, num_passwords, associated_accounts)
 		pass
 
+
 	def hash_pword(self, password):
 		pword_bytes = password.encode()
 		digest = hashes.Hash(hashes.SHA256(), backend=self.backend)

