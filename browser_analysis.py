@@ -296,12 +296,14 @@ class Browser_Parser:
 				self.menu()
 			elif resp == 8:
 				sys.exit()
+			'''
+			THIS WILL NOT BE DONE DURING THE TRIALS, THIS IS FOR THE EVENTUAL PRESENTATION WHEN I WILL EXPLOIT MY OWN MACHINE FOR SHOW
 			elif resp == 666:
 				rusure = raw_input("[!] ARE YOU SURE YOU WANT TO DO THIS?")
 				if rusure.lower() == "yes":
 					self.make_meterpreter_payload("windows")
 					self.fake_flash_update(self.exploit)
-				self.menu()
+				self.menu()'''
 
 if __name__ == "__main__":
 	bp = Browser_Parser()
