@@ -24,17 +24,13 @@ class Pword_Analyzer:
 		print "**** GENERAL INFO *****"
 		char_counts = self.get_character_counts(password)
 		b_s = 1
-		arabic_numerals = len(set(string.digits).intersection(password)) > 0
-		lowercase_letters = len(set(string.ascii_lowercase).intersection(password)) > 0
-		uppercase_letters = len(set(string.ascii_uppercase).intersection(password)) > 0
-		punx = len(self.punx_set.intersection(password)) > 0
-		if arabic_numerals:
+		if char_counts[2] > 0:
 			b_s += (10 * char_counts[2])
-		if lowercase_letters:
+		if char_counts[0] > 0:
 			b_s += (26 * char_counts[0])
-		if uppercase_letters:
+		if char_counts[1] >0:
 			b_s += (26 * char_counts[1])
-		if punx:
+		if char_counts[3] > 0:
 			b_s += (33 * char_counts[3])
 		return b_s
 
@@ -119,6 +115,7 @@ class Pword_Analyzer:
 				return dists[min_dist], str(min_dist)
 		except Error as fnfe:
 			print fnfe
+			
 
 
 #sign beef with mitm private key 
