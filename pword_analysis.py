@@ -3,7 +3,7 @@ import string
 class Pword_Analyzer:
 
 	def __init__(self):
-		self.cpu_factor = 100
+		self.cpu_factor = 1000000 #num guesses/sec
 		self.wordlist = "passwords_john.txt"
 		self.punx_set = set(string.punctuation)
 		self.punx_set.update(' ')
@@ -24,15 +24,22 @@ class Pword_Analyzer:
 		print "**** GENERAL INFO *****"
 		char_counts = self.get_character_counts(password)
 		b_s = 1
+		e_t = 0
 		if char_counts[2] > 0:
 			b_s += (10 * char_counts[2])
+			e_t += 10
 		if char_counts[0] > 0:
 			b_s += (26 * char_counts[0])
+			e_t += 26
 		if char_counts[1] >0:
 			b_s += (26 * char_counts[1])
+			e_t += 26
 		if char_counts[3] > 0:
 			b_s += (33 * char_counts[3])
-		return b_s
+			e_t += 33
+		if e_t == 0:
+			return 0, 0
+		return b_s, self.entropy(e_t, password)
 
 
 
@@ -56,8 +63,8 @@ class Pword_Analyzer:
 				t_score += 1
 			else:
 				continue
-		print "t_score for " + password + ": " + str(t_score) + " transitions"
-		return t_score
+		print "t_score for " + password + ": " + str(t_score -1) + " transitions"
+		return t_score -1
 
 
 	def possibly_word(self, password):
@@ -65,9 +72,9 @@ class Pword_Analyzer:
 		potential_words = 0
 		with open(self.wordlist, "r") as wlf:
 			for pword in wlf:
-				if pword.rstrip("\r\n") in password.lower():
+				if pword.rstrip("\r\n") in password:
 					print "[ALMOST] password contains string: " + pword.rstrip("\r\n")
-					potential_words += 1
+					potential_words += len(pword.rstrip("\r\n"))
 					if pword.rstrip("\r\n") == password:
 						potential_words = -1
 						print "[HIT!] password found in wordlist!!!"
@@ -77,15 +84,19 @@ class Pword_Analyzer:
 
 	def score_password(self, password):
 		number_t = self.get_transitions(password)
-		base_score = self.get_base_score(password)
+		base_score, entropy = self.get_base_score(password)
 		word_count = self.possibly_word(password)
 		print "# of possible words: " + str(word_count)
 		edit_count, closest_password = self.edit_distance(password)
-		tot = (base_score * number_t) * edit_count if edit_count is not 0 else 0
+		tot = (base_score * number_t * entropy) * edit_count if edit_count is not 0 else 0
 		print ("****** FINAL SCORE ******")
 		print "total password score: " +  str(tot)
 		print "////////////////////////////////////"
 		return (tot, edit_count, number_t)
+
+
+	def entropy(self, et, password):
+		return float(et**len(password) / self.cpu_factor)
 
 
 	def edit_distance(self,password1):
@@ -119,3 +130,7 @@ class Pword_Analyzer:
 
 
 #sign beef with mitm private key 
+
+if __name__ == "__main__":
+	pwa = Pword_Analyzer()
+	pwa.score_password(str("hello"))
