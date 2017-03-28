@@ -1,4 +1,5 @@
-import string
+import string, math
+from decimal import Decimal
 
 class Pword_Analyzer:
 
@@ -64,7 +65,7 @@ class Pword_Analyzer:
 			else:
 				continue
 		print "t_score for " + password + ": " + str(t_score -1) + " transitions"
-		return t_score -1
+		return t_score 
 
 
 	def possibly_word(self, password):
@@ -88,7 +89,7 @@ class Pword_Analyzer:
 		word_count = self.possibly_word(password)
 		print "# of possible words: " + str(word_count)
 		edit_count, closest_password = self.edit_distance(password)
-		tot = (base_score * number_t * entropy) * edit_count if edit_count is not 0 else 0
+		tot = math.log((base_score * (number_t+1) * entropy) * edit_count if edit_count is not 0 else 0)
 		print ("****** FINAL SCORE ******")
 		print "total password score: " +  str(tot)
 		print "////////////////////////////////////"
@@ -133,4 +134,4 @@ class Pword_Analyzer:
 
 if __name__ == "__main__":
 	pwa = Pword_Analyzer()
-	pwa.score_password(str("PasswOrd123#"))
+	pwa.score_password(str("hellerthere"))
