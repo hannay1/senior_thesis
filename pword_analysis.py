@@ -133,4 +133,4 @@ class Pword_Analyzer:
 
 if __name__ == "__main__":
 	pwa = Pword_Analyzer()
-	pwa.score_password(str("hello"))
+	pwa.score_password(str("PasswOrd123#"))
