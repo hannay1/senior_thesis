@@ -89,7 +89,11 @@ class Pword_Analyzer:
 		word_count = self.possibly_word(password)
 		print "# of possible words: " + str(word_count)
 		edit_count, closest_password = self.edit_distance(password)
-		tot = math.log((base_score * (number_t+1) * entropy) * edit_count) if edit_count is not 0 else 0
+		try:
+			tot = math.log((float(base_score * (number_t+1) * entropy +1)/float(word_count)) * edit_count) if edit_count is not 0 else 0
+		except ZeroDivisionError as ze:
+			print "hi"
+			tot = math.log((float(base_score * (number_t+1) * entropy +1) * edit_count)) if edit_count is not 0 else 0
 		print ("****** FINAL SCORE ******")
 		print "total password score: " +  str(tot)
 		print "////////////////////////////////////"
@@ -134,4 +138,4 @@ class Pword_Analyzer:
 
 if __name__ == "__main__":
 	pwa = Pword_Analyzer()
-	pwa.score_password(str(""))
+	pwa.score_password(str("RightHa!ndMan34?*"))
