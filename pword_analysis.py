@@ -65,7 +65,7 @@ class Pword_Analyzer:
 			else:
 				continue
 		print "t_score for " + password + ": " + str(t_score -1) + " transitions"
-		return t_score 
+		return t_score -1
 
 
 	def possibly_word(self, password):
@@ -138,4 +138,4 @@ class Pword_Analyzer:
 
 if __name__ == "__main__":
 	pwa = Pword_Analyzer()
-	pwa.score_password(str("RightHa!ndMan34?*"))
+	pwa.score_password(str("ffe"))
