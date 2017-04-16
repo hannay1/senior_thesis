@@ -150,6 +150,16 @@ class Browser_DB_Router:
 			print("error finding record:", SQE)
 			pass
 
+	def get_os_version(self,user_id):
+		try:
+			print("finding OS...")
+			os = self.cur.execute("SELECT os_version FROM BrowserTable WHERE user_id = ? ", [user_id])
+			self.connex.commit()
+			return str(self.cur.fetchone()[0])
+		except sqlite3.Error as SQE:
+			print("error: OS not found:", SQE)
+			return None
+
 
 	def get_browser_toolbar_cmd(self, user_id):
 		try:

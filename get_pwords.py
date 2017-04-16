@@ -7,7 +7,7 @@ class Get_Pwords:
 	'''
 		TO DO:
 		add tumblr
-		q
+		dropbox
 	'''
 	def __init__(self, uid):
 		self.iframe_url = "https://192.168.3.1/filter.js"

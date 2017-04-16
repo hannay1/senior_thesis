@@ -108,8 +108,9 @@ class Password_DB_Router:
 			table_a = self.cur.fetchall()
 			table_b = self.cur.execute('SELECT * FROM TableB')
 			table_b = self.cur.fetchall()
+			table_s = self.cur.fetchall()
 			self.connex.commit()
-			i, j = 1, 1
+			i, j, k = 1, 1, 1
 			for row in table_a:
 				print(str(i), ">", "| USER_ID:", row[0], "| PWORD_ID:", row[1], "| ASSOCIATED_ACCOUNT:", row[2], "| STRENGTH:", row[3], "|","| BRUTEFORCE_FACTOR:", row[4])
 				i +=1
@@ -117,6 +118,9 @@ class Password_DB_Router:
 			for row in table_b:
 				print(str(i), ">", "| USER_ID:", row[0],"| NUMBER_SHARED_PASSWORDS:", row[1])
 				j +=1
+			for row in table_s:
+				print(str(i), ">", "| USER_ID:", row[0], "| ASSOCIATED_ACCOUNT:", row[1], "PASSWORD_HASH:", row[2])
+				k +=1
 		except UnicodeEncodeError:
 			print("error printing tables")
 			pass

@@ -25,7 +25,7 @@ class MITM_Interface:
 		edit_count = tup[1]
 		transitions = tup[2]
 		length = str(len(password))
-		print "password:" + str(password)
+		#print "password:" + str(password)
 		self.pw_db_router.insert_into_table_A(self.current_user, p_id, account, length, strength, edit_count, transitions, base64.b64encode(self.hash_pword(password)))
 		number_shared_passwords = self.pw_db_router.get_user_pwords_accounts(self.current_user, p_id)
 		associated_accounts = number_shared_passwords["accounts"]
